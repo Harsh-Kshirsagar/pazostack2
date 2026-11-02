@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pazostack</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Mukta:wght@400;600;700&display=swap">
+<style>
+/* Layout: asphalt rail on the left (top strip on phones), working area beside it.
+   Boldness lives in one place: the receivable "road sign" panel with its dashed centre line. */
+:root{
+  --bg:#E8E7E1; --surface:#F2F1EC; --raised:#FFFFFF; --ink:#1C2024; --ink2:#575D62; --line:#CBC9C0;
+  --road:#22272C; --road-ink:#ECEAE3; --road-mute:#9AA0A5;
+  --marking:#F5B800; --marking-ink:#241B00; --focus:#7A5800;
+  --go:#1B7448; --go-bg:#DAEDE2; --warn:#8F5200; --warn-bg:#F8E6C4; --bad:#A8231B; --bad-bg:#F5D8D4;
+  --in:#1B7448; --out:#6B7075;
+  --display:'Barlow Condensed','Mukta',system-ui,sans-serif; --body:'Mukta','Noto Sans Devanagari',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171A; --surface:#1B1F23; --raised:#23282D; --ink:#ECEAE4; --ink2:#A3A8AC; --line:#394046;
+  --road:#0E1012; --road-ink:#ECEAE3; --road-mute:#8C9297; --focus:#F5B800;
+  --go:#5FC490; --go-bg:#16342A; --warn:#F0B34F; --warn-bg:#3B2D11; --bad:#F2918A; --bad-bg:#41211E;
+  --in:#5FC490; --out:#8F959A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171A; --surface:#1B1F23; --raised:#23282D; --ink:#ECEAE4; --ink2:#A3A8AC; --line:#394046;
+  --road:#0E1012; --road-ink:#ECEAE3; --road-mute:#8C9297; --focus:#F5B800;
+  --go:#5FC490; --go-bg:#16342A; --warn:#F0B34F; --warn-bg:#3B2D11; --bad:#F2918A; --bad-bg:#41211E;
+  --in:#5FC490; --out:#8F959A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);
+  padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.app{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:1240px;margin:0 auto}
+@media(min-width:900px){.app{grid-template-columns:220px minmax(0,1fr);align-items:start}.rail{position:sticky;top:16px}}
+.rail{background:var(--road);color:var(--road-ink);border-radius:6px;padding:12px;min-width:0}
+.brand{display:grid;gap:8px;padding:0 0 10px}
+.brand .tile{background:#fff;border-radius:4px;padding:8px;display:grid;place-items:center}
+.brand img{display:block;width:100%;max-width:120px;height:auto}
+@media(max-width:899px){.brand{grid-template-columns:auto 1fr;align-items:center;gap:12px}.brand img{max-width:56px}}
+.brand div.t{padding:0 4px;min-width:0}
+.brand b{display:block;font-family:var(--display);font-size:22px;line-height:1.1;letter-spacing:.01em}
+.brand small{display:block;color:var(--road-mute);font-size:12px;line-height:1.2;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+@media(min-width:900px){.nav{flex-direction:column;overflow:visible}}
+.nav a{display:block;padding:7px 12px;border-radius:4px;text-decoration:none;color:#C7CBCD;white-space:nowrap;line-height:1.25}
+.nav a .en{display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--road-mute)}
+.nav a:hover{background:rgba(255,255,255,.08)}
+.nav a[aria-current="page"]{background:var(--marking);color:var(--marking-ink);font-weight:600}
+.nav a[aria-current="page"] .en{color:#5C4500}
+.mode{margin-top:10px;font-size:12px;color:var(--road-mute);padding:0 4px}
+.mode.local{color:#F5B800}
+main{min-width:0}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px;margin-bottom:14px}
+h1{font-family:var(--display);font-weight:700;font-size:32px;line-height:1.1;letter-spacing:.005em}
+h1 .en{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);font-family:var(--body);margin-top:2px}
+h2{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2}
+h2 .en,.l .en,.en.s{font-size:.78em;color:var(--ink2);font-weight:400;font-family:var(--body)}
+.sub{color:var(--ink2);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--raised);border-radius:4px;padding:7px 13px;cursor:pointer;font-weight:600;line-height:1.3}
+.btn:hover{border-color:var(--ink2)}
+.btn.pri{background:var(--marking);border-color:var(--marking);color:var(--marking-ink)}
+.btn.pri:hover{filter:brightness(.96)}
+.btn.sm{padding:3px 9px;font-size:13px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.arm{background:var(--bad);color:#fff}
+.btn[disabled]{opacity:.5;cursor:default}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:0;padding:8px 14px;cursor:pointer;color:var(--ink2);font-weight:600;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--marking)}
+.panel{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:14px;min-width:0}
+.panel>h2{margin-bottom:10px}
+.grid{display:grid;gap:12px;min-width:0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+.tile{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.tile .l{font-size:13px;color:var(--ink2);line-height:1.3}
+.tile .v{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .d{font-size:12.5px;color:var(--ink2)}
+.v.in{color:var(--in)} .v.bad{color:var(--bad)}
+.hero{background:var(--road);color:var(--road-ink);border-radius:6px;padding:18px 20px;display:grid;gap:4px}
+.hero .l{font-size:14px;color:var(--road-mute)}
+.hero .big{font-family:var(--display);font-weight:700;font-size:clamp(40px,9vw,64px);line-height:1;color:var(--marking);font-variant-numeric:tabular-nums}
+.hero hr{border:0;border-top:3px dashed var(--marking);margin:12px 0 8px;opacity:.85}
+.hero .foot{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--road-ink)}
+.hero .foot b{font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:12px;text-align:left;color:var(--ink2);font-weight:600;padding:7px 10px;border-bottom:2px solid var(--line);white-space:nowrap;line-height:1.25}
+th .en{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:400}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.nw{white-space:nowrap}
+tr[data-edit],tr[data-open]{cursor:pointer}
+tr[data-edit]:hover td,tr[data-open]:hover td{background:var(--surface)}
+tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:0}
+.pill{display:inline-block;padding:0 8px;border-radius:3px;font-size:12px;font-weight:600;line-height:1.7;white-space:nowrap}
+.pill.ok{background:var(--go-bg);color:var(--go)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.mute{background:var(--surface);color:var(--ink2);border:1px solid var(--line)}
+.plate{display:inline-block;background:#F5C400;color:#111;border:2px solid #111;border-radius:4px;padding:0 8px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.06em;line-height:1.35;white-space:nowrap}
+.filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;margin-bottom:12px}
+.filters label{display:grid;gap:2px;font-size:12px;color:var(--ink2)}
+.filters input,.filters select{padding:6px 8px}
+input,select,textarea{background:var(--raised);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:60px}
+input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--bad)}
+.filters input,.filters select{width:auto}
+.empty{border:2px dashed var(--line);border-radius:6px;padding:28px 18px;text-align:center;color:var(--ink2);display:grid;gap:10px;justify-items:center}
+.empty b{color:var(--ink);font-size:16px}
+ul.plain{list-style:none;margin:0;padding:0;display:grid;gap:0}
+ul.plain li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+ul.plain li:last-child{border-bottom:0}
+ul.plain .t{flex:none}
+.bar{height:8px;background:var(--surface);border:1px solid var(--line);border-radius:2px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--marking)}
+.bar.go i{background:var(--go)}
+.chart{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end}
+.chart .col{display:grid;gap:4px;justify-items:center;min-width:0}
+.chart .pair{height:130px;display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;border-bottom:2px solid var(--line)}
+.chart .b{width:min(40%,26px);min-height:2px;border-radius:2px 2px 0 0}
+.chart .b.in{background:var(--in)} .chart .b.out{background:var(--out)}
+.chart .m{font-size:12px;color:var(--ink2)}
+.chart .f{font-size:11px;line-height:1.3;text-align:center;font-variant-numeric:tabular-nums}
+.chart .f .a{color:var(--in);display:block} .chart .f .o{color:var(--ink2);display:block}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--ink2);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.card{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:8px;align-content:start;min-width:0;cursor:pointer}
+.card:hover{border-color:var(--ink2)}
+.card h3{font-family:var(--display);font-size:20px;line-height:1.2}
+.kv{display:grid;grid-template-columns:1fr auto;gap:3px 12px;font-size:14px}
+.kv dt{color:var(--ink2)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.kv dd.sum,.kv dt.sum{font-weight:700;border-top:1px solid var(--line);padding-top:3px;color:var(--ink)}
+dl{margin:0}
+.att td.c,.att th.c{min-width:32px;width:32px;text-align:center;padding:6px 0;user-select:none}
+.att td.c{cursor:pointer;font-weight:700;font-size:13px}
+.att td.c:hover{outline:2px solid var(--line);outline-offset:-2px}
+.att td.P{background:var(--go-bg);color:var(--go)} .att td.A{background:var(--bad-bg);color:var(--bad)} .att td.H{background:var(--warn-bg);color:var(--warn)}
+.att th.sun,.att td.sun:not(.P):not(.A):not(.H){background:var(--surface)}
+.att th.today{color:var(--ink);box-shadow:inset 0 -3px 0 var(--marking)}
+.att .nm{position:sticky;left:0;background:var(--raised);min-width:130px;z-index:1;box-shadow:1px 0 0 var(--line)}
+.ov{position:fixed;inset:0;background:rgba(8,10,12,.58);display:flex;overflow:auto;z-index:50;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--raised);color:var(--ink);border-radius:8px;width:100%;max-width:660px;margin:auto;padding:18px;min-width:0}
+.sheet.wide{max-width:820px}
+.sheet h2{margin-bottom:12px;font-size:22px}
+.ff{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.ff .fld{display:grid;gap:3px;align-content:start;min-width:0}
+.ff .fld.full{grid-column:1/-1}
+.ff .fld[hidden]{display:none}
+.fld>span{font-size:13px;color:var(--ink2);line-height:1.25}
+.fld>span b{color:var(--ink);font-weight:600}
+.fld>span .req{color:var(--bad)}
+.prev{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:12px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+.acts .sp{flex:1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));background:var(--road);color:var(--road-ink);padding:9px 16px;border-radius:6px;z-index:60;max-width:calc(100% - 32px);box-shadow:0 4px 16px rgba(0,0,0,.3);border:1px solid var(--marking)}
+.loading{display:grid;place-items:center;min-height:50vh;color:var(--ink2)}
+.note{font-size:13px;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:3px;padding:1px 8px;font-size:13px;background:var(--raised)}
+.neg{color:var(--bad)}
+.sec{margin-top:18px}
+.stack{display:grid;gap:14px;min-width:0}
+@media(prefers-reduced-motion:no-preference){.sheet{animation:up .14s ease-out}@keyframes up{from{transform:translateY(8px);opacity:.4}}}
+body{margin:0}
+
+/* ───────── added sign-in screen ───────── */
+body.auth-pending .app{display:none}
+#auth-screen{display:none}
+body.auth-pending #auth-screen{display:grid;min-height:100vh;place-items:center;padding:24px 16px}
+.auth-card{width:min(100%,420px);background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:26px;box-shadow:0 12px 36px rgba(0,0,0,.10)}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.auth-brand img{width:60px;height:60px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px;padding:5px}
+.auth-brand b{display:block;font-family:var(--display);font-size:26px;line-height:1.05;letter-spacing:.03em}
+.auth-brand span{display:block;color:var(--ink2);font-size:12px;margin-top:3px}
+.auth-card h1{font-size:28px;margin-bottom:5px}
+.auth-card .auth-intro{color:var(--ink2);font-size:13px;margin-bottom:18px}
+.auth-form{display:grid;gap:12px}
+.auth-form label{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+.auth-form button{width:100%;justify-content:center;margin-top:4px}
+.auth-error{min-height:18px;color:var(--bad);font-size:13px;margin-top:2px}
+.auth-loading{text-align:center;color:var(--ink2);padding:34px 10px}
+.auth-user{display:grid;gap:7px;padding:12px 4px 2px;color:var(--road-mute);font-size:12px;overflow-wrap:anywhere}
+.auth-user .btn{justify-content:center;background:transparent;border-color:#687078;color:var(--road-ink)}
+@media(max-width:899px){.auth-user{display:flex;align-items:center;justify-content:space-between;gap:10px}}
+
+</style>
+
+</head>
+<body class="auth-pending">
+<div id="auth-screen" aria-live="polite"></div>
+<div class="app">
+  <aside class="rail" id="rail"></aside>
+  <main id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var LOGO='data:image/png;base64,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';
+/* ───────── constants ───────── */
+var TABLES=['config','sites','staff','labour','att','labourDays','payouts','bills','receipts','crusherProd','crusherSales','vehicles','vehicleLogs','expenses'];
+var VIEWS=['dash','sites','staff','labour','bills','crusher','vehicles','expenses','setup'];
+var NAV=[['dash','डॅशबोर्ड','Dashboard'],['sites','साइट','Sites'],['staff','कर्मचारी','Staff & salary'],['labour','मजूर','Labour'],['bills','क्लायंट बिल','Client bills'],['crusher','क्रशर','Stone crusher'],['vehicles','वाहने','Vehicles'],['expenses','खर्च','Expenses'],['setup','सेटिंग','Setup']];
+var MON=['जानेवारी','फेब्रुवारी','मार्च','एप्रिल','मे','जून','जुलै','ऑगस्ट','सप्टेंबर','ऑक्टोबर','नोव्हेंबर','डिसेंबर'];
+var MONS=['जाने','फेब्रु','मार्च','एप्रि','मे','जून','जुलै','ऑग','सप्टें','ऑक्टो','नोव्हें','डिसें'];
+var PROD=[['p40','40 mm'],['p20','20 mm'],['p10','10 mm'],['dust','स्टोन डस्ट'],['gsb','GSB'],['wmm','WMM']];
+var DEF={firm:'',gst:18,sd:5,it:2,gstTds:2,cess:1,basis:30,unit:'MT'};
+var OPT={
+  siteStatus:['Active|सुरू','On hold|थांबलेले','Completed|पूर्ण'],
+  role:['Manager|व्यवस्थापक','Engineer|इंजिनिअर','Supervisor|सुपरवायझर','Accountant|अकाउंटंट','Operator|ऑपरेटर','Driver|ड्रायव्हर','Mechanic|मेकॅनिक','Crusher staff|क्रशर कर्मचारी','Other|इतर'],
+  active:['Active|कामावर','Left|सोडले'],
+  ltype:['Unskilled|अकुशल','Skilled|कुशल','Mukadam|मुकादम'],
+  billKind:['Running|रनिंग (RA)','Final|अंतिम','Extra|एक्स्ट्रा आयटम'],
+  vtype:['Tipper|टिप्पर','JCB|जेसीबी','Excavator|एक्सकॅव्हेटर','Road roller|रोड रोलर','Paver|पेव्हर','Grader|ग्रेडर','Water tanker|पाण्याचा टँकर','Loader|लोडर','Transit mixer|ट्रान्झिट मिक्सर','Other|इतर'],
+  vstatus:['Active|चालू','Repair|दुरुस्तीत','Sold|विकले'],
+  vown:['Own|स्वतःचे','Hired|भाड्याचे'],
+  munit:['hrs|तास (hours)','km|किमी (km)'],
+  logKind:['Fuel|डिझेल भरले','Work|कामाची नोंद','Repair|दुरुस्ती / सर्व्हिस'],
+  cat:['Material|मटेरियल (बिटुमेन, सिमेंट)','Diesel|डिझेल (जनरेटर / क्रशर)','Royalty|रॉयल्टी','Crusher power|क्रशर वीज बिल','Crusher repair|क्रशर दुरुस्ती','Transport|वाहतूक','Hire|भाडे','Government fee|सरकारी शुल्क','Office|ऑफिस','Camp & food|कॅम्प / जेवण','Other|इतर'],
+  mode:['Cash|रोख','UPI','Bank|बँक / चेक'],
+  payKind:['Salary|पगार','Advance|उचल'],
+  lpayKind:['Payment|मजुरी दिली','Advance|उचल'],
+  saleKind:['Sale|विक्री','Own|स्वतःच्या साइटसाठी']
+};
+/* ───────── helpers ───────── */
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var num=function(v){var n=parseFloat(v);return isFinite(n)?n:0};
+var pad=function(n){return String(n).padStart(2,'0')};
+var iso=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+var todayS=function(){return iso(new Date())};
+var ym=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+var daysIn=function(m){var p=m.split('-');return new Date(+p[0],+p[1],0).getDate()};
+var fd=function(s){if(!s)return '–';var p=s.split('-');return p[2]+'-'+p[1]+'-'+p[0]};
+var addDays=function(s,n){var d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return iso(d)};
+var diffDays=function(a,b){return Math.round((new Date(a+'T00:00:00')-new Date(b+'T00:00:00'))/864e5)};
+var ml=function(m){var p=m.split('-');return MON[+p[1]-1]+' '+p[0]};
+var inr=function(n,dp){dp=dp||0;return '₹'+num(n).toLocaleString('en-IN',{minimumFractionDigits:dp,maximumFractionDigits:dp})};
+function inrS(n){n=num(n);var a=Math.abs(n),s=n<0?'-':'';if(a>=1e7)return s+'₹'+(a/1e7).toFixed(2)+' Cr';if(a>=1e5)return s+'₹'+(a/1e5).toFixed(2)+' L';return s+inr(a)}
+var qty=function(n){return num(n).toLocaleString('en-IN',{maximumFractionDigits:2})};
+var uid=function(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4)};
+var sum=function(a,k){return a.reduce(function(s,x){return s+num(x[k])},0)};
+var parseOpt=function(s){var p=s.split('|');return {v:p[0],mr:p[1]||'',t:p[1]?(p[1]+(p[1]===p[0]?'':' · '+p[0])):p[0]}};
+var optLabel=function(list,v){for(var i=0;i<list.length;i++){var o=parseOpt(list[i]);if(o.v===v)return o.mr||o.v}return v||'–'};
+var lab=function(s){var p=s.split('|');return '<b>'+esc(p[0])+'</b>'+(p[1]?' <span class="en">'+esc(p[1])+'</span>':'')};
+var thLab=function(s){var p=s.split('|');return esc(p[0])+(p[1]?'<span class="en">'+esc(p[1])+'</span>':'')};
+var stripHtml=function(s){return String(s).replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim()};
+var $=function(id){return document.getElementById(id)};
+var desc=function(k){return function(a,b){return String(b[k]||'').localeCompare(String(a[k]||''))}};
+
+/* ───────── data layer ───────── */
+var authUser=null;
+var DB={};TABLES.forEach(function(t){DB[t]={}});
+var dbh=null,mode='local',booting=!!(window.claude&&window.claude.use),readyT={};
+var L=function(t){return Object.keys(DB[t]).map(function(k){return DB[t][k]})};
+var cfg=function(){return Object.assign({},DEF,DB.config.main||{})};
+function lsLoad(){TABLES.forEach(function(t){try{var r=localStorage.getItem('tk_'+t);DB[t]=r?JSON.parse(r):{}}catch(e){DB[t]={}}})}
+function lsSave(t){try{localStorage.setItem('tk_'+t,JSON.stringify(DB[t]))}catch(e){}}
+var chains={},active=0,waiting=[];
+function limit(fn){return new Promise(function(res,rej){var run=function(){active++;fn().then(res,rej).then(function(){active--;if(waiting.length)waiting.shift()()})};active<4?run():waiting.push(run)})}
+function enqueue(key,fn){var p=(chains[key]||Promise.resolve()).then(function(){return limit(fn)});chains[key]=p.catch(function(){});return p}
+function fail(e){var c=e&&e.code;toast(c==='invalid_argument'?'बदल जतन झाला नाही — तुम्हाला फक्त पाहण्याची परवानगी आहे · No permission to edit':c==='quota_exceeded'?'साठवणीची मर्यादा संपली · Storage full':'जतन करता आले नाही · Could not save')}
+function put(t,o){
+  if(!o.id)o.id=uid();
+  DB[t][o.id]=o;
+  if(mode==='cloud'){var id=o.id;enqueue(t+'/'+id,function(){return dbh.collection(t).doc(id).set(JSON.parse(JSON.stringify(o)))}).catch(fail)}
+  else lsSave(t);
+  return o;
+}
+function del(t,id){
+  delete DB[t][id];
+  if(mode==='cloud')enqueue(t+'/'+id,function(){return dbh.collection(t).doc(id).delete()}).catch(fail);
+  else lsSave(t);
+}
+function subscribeAll(){
+  TABLES.forEach(function(t){
+    dbh.collection(t).onSnapshot(function(snap){
+      var m={};snap.docs.forEach(function(d){m[d.id]=Object.assign({},d.data(),{id:d.id})});
+      DB[t]=m;readyT[t]=true;
+      if(booting&&TABLES.every(function(x){return readyT[x]}))booting=false;
+      sched();
+    },function(e){if(e&&e.code==='revoked'){mode='local';booting=false;sched()}});
+  });
+}
+
+/* ───────── business calculations ───────── */
+function receiptsOf(billId){return L('receipts').filter(function(r){return r.billId===billId})}
+function billCalc(b){
+  var base=num(b.base),gst=base*num(b.gstPct)/100,total=base+gst;
+  var sd=base*num(b.sdPct)/100,it=base*num(b.itPct)/100,gt=base*num(b.gstTdsPct)/100,cess=base*num(b.cessPct)/100,oth=num(b.other);
+  var ded=sd+it+gt+cess+oth,net=total-ded;
+  var rec=b.id?sum(receiptsOf(b.id),'amount'):0;
+  return {base:base,gst:gst,total:total,sd:sd,it:it,gt:gt,cess:cess,oth:oth,ded:ded,net:net,rec:rec,due:net-rec};
+}
+function billStatus(c){return c.due<=0.5?['ok','मिळाले']:c.rec>0?['warn','अंशतः मिळाले']:['bad','बाकी']}
+function siteStats(id){
+  var billed=0,gross=0,rec=0,due=0;
+  L('bills').filter(function(b){return b.siteId===id}).forEach(function(b){var c=billCalc(b);billed+=c.base;gross+=c.total;rec+=c.rec;due+=c.due});
+  var exp=sum(L('expenses').filter(function(e){return e.siteId===id}),'amount');
+  var veh=sum(L('vehicleLogs').filter(function(e){return e.siteId===id}),'amount');
+  var lab=L('labourDays').filter(function(x){return x.siteId===id}).reduce(function(s,x){return s+num(x.days)*num(x.rate)},0);
+  var cost=exp+veh+lab;
+  return {billed:billed,gross:gross,rec:rec,due:due,exp:exp,veh:veh,lab:lab,cost:cost,profit:billed-cost};
+}
+function present(sid,m){var a=DB.att[sid+'_'+m];if(!a)return 0;return Object.keys(a.days||{}).reduce(function(s,k){var v=a.days[k];return s+(v==='P'?1:v==='H'?.5:0)},0)}
+function earnedStaff(st,m){return Math.round(num(st.salary)/(num(cfg().basis)||30)*present(st.id,m))}
+function paidIn(who,pid,m,kind){return L('payouts').filter(function(p){return p.who===who&&p.personId===pid&&(!m||String(p.date).indexOf(m)===0)&&(!kind||p.kind===kind)}).reduce(function(s,p){return s+num(p.amount)},0)}
+function labourWage(id,m){return L('labourDays').filter(function(x){return x.labourId===id&&(!m||String(x.date).indexOf(m)===0)}).reduce(function(s,x){return s+num(x.days)*num(x.rate)},0)}
+function labourDaysCount(id,m){return L('labourDays').filter(function(x){return x.labourId===id&&(!m||String(x.date).indexOf(m)===0)}).reduce(function(s,x){return s+num(x.days)},0)}
+function stock(){
+  var o={};PROD.forEach(function(p){o[p[0]]={name:p[1],made:0,out:0,key:p[0]}});
+  L('crusherProd').forEach(function(r){PROD.forEach(function(p){o[p[0]].made+=num(r[p[0]])})});
+  L('crusherSales').forEach(function(r){if(o[r.product])o[r.product].out+=num(r.qty)});
+  return PROD.map(function(p){var x=o[p[0]];x.left=x.made-x.out;return x});
+}
+function cashIn(m){return sum(L('receipts').filter(function(r){return String(r.date).indexOf(m)===0}),'amount')+sum(L('crusherSales').filter(function(r){return r.kind==='Sale'&&String(r.date).indexOf(m)===0}),'paid')}
+function cashOut(m){var f=function(t){return L(t).filter(function(r){return String(r.date).indexOf(m)===0})};return sum(f('expenses'),'amount')+sum(f('vehicleLogs'),'amount')+sum(f('payouts'),'amount')}
+function vStats(v){
+  var logs=L('vehicleLogs').filter(function(x){return x.vehicleId===v.id});
+  var fuel=logs.filter(function(x){return x.kind==='Fuel'});
+  var litres=sum(fuel,'litres'),fuelCost=sum(fuel,'amount'),rep=sum(logs.filter(function(x){return x.kind==='Repair'}),'amount');
+  var rd=logs.map(function(x){return num(x.meter)}).filter(function(x){return x>0});
+  var span=rd.length>1?Math.max.apply(null,rd)-Math.min.apply(null,rd):0;
+  var eff=span>0&&litres>0?(v.meterUnit==='km'?span/litres:litres/span):null;
+  var nd=logs.map(function(x){return x.nextDue}).filter(Boolean).sort().pop();
+  return {litres:litres,fuelCost:fuelCost,rep:rep,span:span,eff:eff,nextDue:nd,hours:sum(logs.filter(function(x){return x.kind==='Work'}),'hours')};
+}
+var VDOCS=[['insuranceExp','विमा','Insurance'],['fitnessExp','फिटनेस','Fitness'],['pucExp','PUC','PUC'],['permitExp','परमिट','Permit']];
+function alerts(){
+  var out=[],t=todayS();
+  L('vehicles').filter(function(v){return v.status!=='Sold'}).forEach(function(v){
+    VDOCS.forEach(function(d){var x=v[d[0]];if(!x)return;var n=diffDays(x,t);
+      if(n<0)out.push({sev:2,k:n,tag:'संपले',txt:'<b>'+esc(v.reg)+'</b> · '+d[1]+' '+fd(x)+' ('+(-n)+' दिवसांपूर्वी)'});
+      else if(n<=30)out.push({sev:1,k:n,tag:n+' दिवस',txt:'<b>'+esc(v.reg)+'</b> · '+d[1]+' संपणार '+fd(x)});});
+    var nd=vStats(v).nextDue;if(nd){var n=diffDays(nd,t);if(n<0)out.push({sev:2,k:n,tag:'सर्व्हिस',txt:'<b>'+esc(v.reg)+'</b> · सर्व्हिस थकली '+fd(nd)});else if(n<=7)out.push({sev:1,k:n,tag:n+' दिवस',txt:'<b>'+esc(v.reg)+'</b> · सर्व्हिस '+fd(nd)})}
+  });
+  L('bills').forEach(function(b){var c=billCalc(b);if(c.due>0.5){var age=diffDays(t,b.date||t);if(age>45)out.push({sev:age>90?2:1,k:-age,tag:age+' दिवस',txt:'बिल <b>'+esc(b.billNo)+'</b> · '+esc(nameOf('sites',b.siteId))+' · '+inrS(c.due)+' येणे'})}});
+  L('sites').filter(function(s){return s.status==='Active'&&s.end}).forEach(function(s){var n=diffDays(s.end,t);if(n<0)out.push({sev:2,k:n,tag:'मुदत संपली',txt:'<b>'+esc(s.name)+'</b> · मुदत '+fd(s.end)});else if(n<=30)out.push({sev:1,k:n,tag:n+' दिवस',txt:'<b>'+esc(s.name)+'</b> · मुदत '+fd(s.end)})});
+  stock().forEach(function(s){if(s.left<-0.001)out.push({sev:1,k:0,tag:'साठा',txt:esc(s.name)+' चा साठा उणे आहे — उत्पादन नोंद तपासा'})});
+  return out.sort(function(a,b){return b.sev-a.sev||a.k-b.k});
+}
+function nameOf(t,id,k){var r=DB[t][id];return r?r[k||'name']:'(हटवलेले)'}
+
+/* ───────── entities ───────── */
+var F=function(k,l,t,x){return Object.assign({k:k,l:l,t:t||'text'},x||{})};
+var E={
+ sites:{name:'साइट|Site',title:function(r){return r.name},f:[
+  F('name','साइटचे नाव|Site name','text',{req:1,full:1,ph:'उदा. SH-138 रुंदीकरण कि.मी. 22–31'}),
+  F('client','विभाग / क्लायंट|Department','text',{ph:'PWD, ZP, PMGSY…'}),
+  F('wo','वर्क ऑर्डर क्र.|Work order no.'),
+  F('value','कराराची रक्कम (₹)|Contract value','number'),
+  F('status','स्थिती|Status','select',{opts:OPT.siteStatus,def:'Active'}),
+  F('start','सुरुवात|Start date','date'),
+  F('end','मुदत|Due date','date'),
+  F('loc','ठिकाण|Location'),
+  F('note','नोंद|Notes','textarea',{full:1})]},
+ staff:{name:'कर्मचारी|Staff',title:function(r){return r.name},delNote:1,f:[
+  F('name','नाव|Name','text',{req:1}),F('role','पद|Role','select',{opts:OPT.role,def:'Supervisor'}),
+  F('phone','फोन|Phone','tel'),F('salary','मासिक पगार (₹)|Monthly salary','number',{req:1}),
+  F('joined','रुजू तारीख|Joined on','date'),F('status','स्थिती|Status','select',{opts:OPT.active,def:'Active'}),
+  F('note','नोंद|Notes','textarea',{full:1})]},
+ labour:{name:'मजूर|Labourer',title:function(r){return r.name},delNote:1,f:[
+  F('name','नाव|Name','text',{req:1}),F('ltype','प्रकार|Type','select',{opts:OPT.ltype,def:'Unskilled'}),
+  F('rate','रोजंदारी (₹/दिवस)|Daily wage','number',{req:1}),F('gang','मुकादम / टोळी|Gang / mukadam'),
+  F('phone','फोन|Phone','tel'),F('status','स्थिती|Status','select',{opts:OPT.active,def:'Active'})]},
+ labourDays:{name:'मजुरी नोंद|Labour entry',title:function(r){return fd(r.date)},f:[
+  F('date','तारीख|Date','date',{req:1,def:todayS}),F('labourId','मजूर|Worker','labour',{req:1}),
+  F('siteId','साइट|Site','site',{req:1}),F('days','दिवस|Days worked','number',{req:1,def:1,step:'0.5'}),
+  F('rate','दर (₹/दिवस)|Rate','number',{req:1}),F('note','नोंद|Notes')]},
+ payouts:{name:'पेमेंट|Payment',title:function(r){return fd(r.date)},head:function(d){
+   var n=d.who==='staff'?nameOf('staff',d.personId):nameOf('labour',d.personId);
+   return '<p class="sub" style="margin-bottom:10px">'+(d.who==='staff'?'कर्मचारी':'मजूर')+': <b style="color:var(--ink)">'+esc(n)+'</b></p>'},f:[
+  F('who','','hidden'),F('personId','','hidden'),
+  F('kind','प्रकार|Type','select',{opts:OPT.payKind,def:'Salary'}),F('date','तारीख|Date','date',{req:1,def:todayS}),
+  F('amount','रक्कम (₹)|Amount','number',{req:1}),F('mode','पद्धत|Mode','select',{opts:OPT.mode,def:'Cash'}),
+  F('note','नोंद|Notes','text',{full:1})]},
+ bills:{name:'बिल|Bill',title:function(r){return r.billNo},f:[
+  F('billNo','बिल क्र.|Bill no.','text',{req:1,ph:'RA-1'}),F('siteId','साइट|Site','site',{req:1}),
+  F('date','बिल तारीख|Bill date','date',{req:1,def:todayS}),F('kind','प्रकार|Type','select',{opts:OPT.billKind,def:'Running'}),
+  F('base','कामाची रक्कम (GST शिवाय ₹)|Work value, excl. GST','number',{req:1,full:1}),
+  F('gstPct','GST %|GST','number',{def:function(){return cfg().gst},step:'0.01'}),
+  F('sdPct','सुरक्षा ठेव %|Security deposit','number',{def:function(){return cfg().sd},step:'0.01'}),
+  F('itPct','आयकर TDS %|Income-tax TDS','number',{def:function(){return cfg().it},step:'0.01'}),
+  F('gstTdsPct','GST TDS %|GST TDS','number',{def:function(){return cfg().gstTds},step:'0.01'}),
+  F('cessPct','कामगार उपकर %|Labour cess','number',{def:function(){return cfg().cess},step:'0.01'}),
+  F('other','इतर वजावट (₹)|Other deduction','number'),
+  F('otherNote','इतर वजावट कारण|Deduction reason'),F('note','नोंद|Notes','text')],
+  preview:function(d){var c=billCalc(d);return '<dl class="kv"><dt>कामाची रक्कम</dt><dd>'+inr(c.base,2)+'</dd><dt>+ GST</dt><dd>'+inr(c.gst,2)+'</dd><dt class="sum">बिलाची एकूण रक्कम</dt><dd class="sum">'+inr(c.total,2)+'</dd><dt>− सुरक्षा ठेव</dt><dd>'+inr(c.sd,2)+'</dd><dt>− आयकर TDS</dt><dd>'+inr(c.it,2)+'</dd><dt>− GST TDS</dt><dd>'+inr(c.gt,2)+'</dd><dt>− कामगार उपकर</dt><dd>'+inr(c.cess,2)+'</dd><dt>− इतर</dt><dd>'+inr(c.oth,2)+'</dd><dt class="sum">प्रत्यक्ष मिळणारी रक्कम</dt><dd class="sum">'+inr(c.net,2)+'</dd></dl>'}},
+ receipts:{name:'बिल पेमेंट|Receipt',title:function(r){return fd(r.date)},head:function(d){var b=DB.bills[d.billId];return '<p class="sub" style="margin-bottom:10px">बिल: <b style="color:var(--ink)">'+esc(b?b.billNo:'')+'</b></p>'},f:[
+  F('billId','','hidden'),F('date','मिळाल्याची तारीख|Received on','date',{req:1,def:todayS}),
+  F('amount','रक्कम (₹)|Amount','number',{req:1}),F('ref','UTR / चेक क्र.|Reference'),F('note','नोंद|Notes')]},
+ crusherProd:{name:'क्रशर उत्पादन|Crusher production',title:function(r){return fd(r.date)},f:[
+  F('date','तारीख|Date','date',{req:1,def:todayS}),F('input','कच्चा दगड (टन/ब्रास)|Raw boulders in','number'),
+  F('p40','40 mm','number'),F('p20','20 mm','number'),F('p10','10 mm','number'),F('dust','स्टोन डस्ट|Stone dust','number'),
+  F('gsb','GSB','number'),F('wmm','WMM','number'),F('hours','क्रशर चालू तास|Hours run','number'),F('note','नोंद|Notes')]},
+ crusherSales:{name:'क्रशर विक्री / रवानगी|Dispatch',title:function(r){return fd(r.date)},f:[
+  F('date','तारीख|Date','date',{req:1,def:todayS}),F('kind','प्रकार|Kind','select',{opts:OPT.saleKind,def:'Sale'}),
+  F('product','माल|Product','prod',{req:1}),F('qty','प्रमाण|Quantity','number',{req:1}),
+  F('party','पार्टी / खरेदीदार|Buyer','text',{show:function(d){return d.kind!=='Own'}}),
+  F('siteId','साइट|Site','site',{show:function(d){return d.kind==='Own'}}),
+  F('vehicle','गाडी क्र.|Vehicle no.'),F('rate','दर (प्रति एकक ₹)|Rate per unit','number'),
+  F('paid','मिळालेली रक्कम (₹)|Amount received','number',{show:function(d){return d.kind!=='Own'}}),F('note','नोंद|Notes')]},
+ vehicles:{name:'वाहन|Vehicle',title:function(r){return r.reg},delNote:1,f:[
+  F('reg','गाडी क्रमांक|Registration no.','text',{req:1,ph:'MH 09 AB 1234'}),F('vtype','प्रकार|Type','select',{opts:OPT.vtype,def:'Tipper'}),
+  F('make','कंपनी / मॉडेल|Make & model'),F('own','मालकी|Ownership','select',{opts:OPT.vown,def:'Own'}),
+  F('meterUnit','मीटर|Meter','select',{opts:OPT.munit,def:'hrs'}),F('status','स्थिती|Status','select',{opts:OPT.vstatus,def:'Active'}),
+  F('insuranceExp','विमा मुदत|Insurance expiry','date'),F('fitnessExp','फिटनेस मुदत|Fitness expiry','date'),
+  F('pucExp','PUC मुदत|PUC expiry','date'),F('permitExp','परमिट मुदत|Permit expiry','date'),
+  F('note','नोंद|Notes','textarea',{full:1})]},
+ vehicleLogs:{name:'वाहन नोंद|Vehicle log',title:function(r){return fd(r.date)},f:[
+  F('date','तारीख|Date','date',{req:1,def:todayS}),F('vehicleId','वाहन|Vehicle','vehicle',{req:1}),
+  F('kind','नोंदीचा प्रकार|Entry type','select',{opts:OPT.logKind,def:'Fuel'}),F('siteId','साइट|Site','site'),
+  F('litres','डिझेल (लिटर)|Diesel litres','number',{show:function(d){return d.kind==='Fuel'}}),
+  F('amount','रक्कम (₹)|Cost','number',{show:function(d){return d.kind!=='Work'}}),
+  F('meter','मीटर रीडिंग|Meter reading','number'),
+  F('hours','तास / फेऱ्या|Hours or trips','number',{show:function(d){return d.kind==='Work'}}),
+  F('nextDue','पुढील सर्व्हिस तारीख|Next service due','date',{show:function(d){return d.kind==='Repair'}}),
+  F('note','नोंद|Notes','text',{full:1})]},
+ expenses:{name:'खर्च|Expense',title:function(r){return fd(r.date)},f:[
+  F('date','तारीख|Date','date',{req:1,def:todayS}),F('cat','प्रकार|Category','select',{opts:OPT.cat,def:'Material'}),
+  F('amount','रक्कम (₹)|Amount','number',{req:1}),F('siteId','साइट (असल्यास)|Site, if any','site'),
+  F('paidTo','कोणाला दिले|Paid to'),F('mode','पद्धत|Mode','select',{opts:OPT.mode,def:'Cash'}),
+  F('note','नोंद|Notes','text',{full:1})]}
+};
+
+/* ───────── state ───────── */
+var S={view:'dash',tab:{},month:ym(new Date()),site:'',cat:'',veh:'',ctx:null};
+var EXPORTS={};
+var curM=function(){return S.month||ym(new Date())};
+var tabOf=function(v,d){return S.tab[v]||d};
+var pending=false;
+function sched(){if(pending)return;pending=true;requestAnimationFrame(function(){pending=false;render()})}
+
+/* ───────── UI atoms ───────── */
+function pill(cls,t){return '<span class="pill '+cls+'">'+esc(t)+'</span>'}
+function empty(msg,btn){return '<div class="empty"><b>'+esc(msg[0])+'</b><span>'+esc(msg[1]||'')+'</span>'+(btn||'')+'</div>'}
+function addBtn(ent,label,preset,cls){return '<button class="btn '+(cls||'pri')+'" data-act="add" data-ent="'+ent+'"'+(preset?" data-preset='"+esc(JSON.stringify(preset))+"'":'')+'>+ '+esc(label)+'</button>'}
+function table(cols,rows,o){
+  o=o||{};
+  if(!rows.length)return empty(o.empty||['अजून नोंदी नाहीत','No records yet'],o.emptyBtn);
+  var h='<div class="tw"'+(o.id?' id="'+o.id+'"':'')+'><table'+(o.cls?' class="'+o.cls+'"':'')+'><thead><tr>'+cols.map(function(c){return '<th class="'+(c.c||'')+'">'+thLab(c.h)+'</th>'}).join('')+'</tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr'+(o.row?' '+o.row(r):'')+'>'+cols.map(function(c){return '<td class="'+(c.c||'')+'">'+c.v(r)+'</td>'}).join('')+'</tr>'});
+  h+='</tbody>';
+  if(o.foot)h+='<tfoot><tr>'+o.foot.map(function(x){return '<td class="'+(x[1]||'')+'">'+x[0]+'</td>'}).join('')+'</tr></tfoot>';
+  return h+'</table></div>';
+}
+function exportBtn(key,name,cols,rows){
+  EXPORTS[key]={name:name,cols:cols,rows:rows};
+  return '<button class="btn sm" data-act="export" data-k="'+key+'">CSV ↓</button>';
+}
+function siteOpts(blank){return (blank?[['','— सर्व साइट —']]:[]).concat(L('sites').sort(function(a,b){return String(a.name).localeCompare(b.name)}).map(function(s){return [s.id,s.name]}))}
+function selectHTML(id,opts,val,attrs){return '<select id="'+id+'" '+(attrs||'')+'>'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(val==null?'':val)?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>'}
+function filterBar(o){
+  var h='<div class="filters">';
+  if(o.month)h+='<label>महिना · Month<span class="row" style="gap:6px"><input type="month" data-f="month" value="'+esc(S.month)+'" aria-label="Month"><button class="btn sm" data-act="allmonths"'+(S.month?'':' disabled')+'>सर्व</button></span></label>';
+  if(o.site)h+='<label>साइट · Site'+selectHTML('fsite',siteOpts(true),S.site,'data-f="site"')+'</label>';
+  if(o.veh)h+='<label>वाहन · Vehicle'+selectHTML('fveh',[['','— सर्व वाहने —']].concat(L('vehicles').map(function(v){return [v.id,v.reg]})),S.veh,'data-f="veh"')+'</label>';
+  if(o.cat)h+='<label>प्रकार · Category'+selectHTML('fcat',[['','— सर्व —']].concat(OPT.cat.map(function(c){var p=parseOpt(c);return [p.v,p.mr||p.v]})),S.cat,'data-f="cat"')+'</label>';
+  return h+'</div>';
+}
+function inMonth(r){return !S.month||String(r.date).indexOf(S.month)===0}
+function head(mr,en,right){return '<div class="head"><h1>'+esc(mr)+'<span class="en">'+esc(en)+'</span></h1><div class="row">'+(right||'')+'</div></div>'}
+function tabs(view,list,def){var cur=tabOf(view,def);return '<div class="tabs" role="tablist">'+list.map(function(t){return '<button role="tab" aria-selected="'+(cur===t[0])+'" data-act="tab" data-v="'+view+'" data-t="'+t[0]+'">'+esc(t[1])+' <span class="en s">'+esc(t[2])+'</span></button>'}).join('')+'</div>'}
+
+/* ───────── views ───────── */
+function vDash(){
+  var m=curM(),t=todayS();
+  var recv=0,sdHeld=0,gross=0;
+  L('bills').forEach(function(b){var c=billCalc(b);recv+=Math.max(0,c.due);sdHeld+=c.sd;gross+=c.total});
+  var partyDue=L('crusherSales').filter(function(r){return r.kind==='Sale'}).reduce(function(s,r){return s+Math.max(0,num(r.qty)*num(r.rate)-num(r.paid))},0);
+  var ci=cashIn(m),co=cashOut(m);
+  var al=alerts(),st=stock();
+  var openBills=L('bills').filter(function(b){return billCalc(b).due>0.5}).length;
+  var h=head('डॅशबोर्ड','Dashboard','<label class="sub">महिना · Month <input type="month" data-f="month" value="'+esc(curM())+'" style="width:auto;padding:5px 8px"></label>');
+  if(!L('sites').length&&!L('staff').length&&!L('bills').length)h+=welcome();
+  h+='<div class="stack"><section class="hero"><span class="l">क्लायंटकडून येणे बाकी · Receivable from clients</span><span class="big">'+inrS(recv)+'</span><hr><div class="foot"><span>उघडी बिले <b>'+openBills+'</b></span><span>सुरक्षा ठेव अडकलेली <b>'+inrS(sdHeld)+'</b></span><span>क्रशर पार्टीकडून येणे <b>'+inrS(partyDue)+'</b></span></div></section>';
+  h+='<div class="grid g4"><div class="tile"><div class="l">'+ml(m)+' · आले (Cash in)</div><div class="v in">'+inrS(ci)+'</div><div class="d">बिल पेमेंट + क्रशर विक्री</div></div>'+
+     '<div class="tile"><div class="l">'+ml(m)+' · गेले (Cash out)</div><div class="v">'+inrS(co)+'</div><div class="d">खर्च, वाहने, पगार, मजुरी</div></div>'+
+     '<div class="tile"><div class="l">शिल्लक · Net</div><div class="v'+(ci-co<0?' bad':'')+'">'+inrS(ci-co)+'</div><div class="d">या महिन्याची आवक − जावक</div></div>'+
+     '<div class="tile"><div class="l">सुरू साइट · Active sites</div><div class="v">'+L('sites').filter(function(s){return s.status==='Active'}).length+'</div><div class="d">एकूण '+L('sites').length+'</div></div></div>';
+  h+='<div class="grid g2"><section class="panel"><h2>लक्ष द्या <span class="en">Needs attention</span></h2>'+
+     (al.length?'<ul class="plain">'+al.slice(0,9).map(function(a){return '<li><span class="t">'+pill(a.sev===2?'bad':'warn',a.tag)+'</span><span>'+a.txt+'</span></li>'}).join('')+'</ul>'+(al.length>9?'<p class="note" style="margin-top:6px">आणखी '+(al.length-9)+' सूचना</p>':''):'<p class="note">सध्या कोणतीही सूचना नाही.</p>')+'</section>'+
+     '<section class="panel"><h2>क्रशर साठा <span class="en">Crusher stock · '+esc(cfg().unit)+'</span></h2>'+
+     (L('crusherProd').length?'<dl class="kv">'+st.map(function(s){return '<dt>'+esc(s.name)+'</dt><dd'+(s.left<0?' class="neg"':'')+'>'+qty(s.left)+'</dd>'}).join('')+'</dl>':'<p class="note">उत्पादन नोंद केल्यावर साठा दिसेल.</p>')+'</section></div>';
+  var data=[];for(var i=5;i>=0;i--){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);var mm=ym(d);data.push({m:mm,i:cashIn(mm),o:cashOut(mm)})}
+  var mx=Math.max.apply(null,[1].concat(data.map(function(x){return x.i}),data.map(function(x){return x.o})));
+  h+='<section class="panel"><h2>गेल्या ६ महिन्यांची आवक-जावक <span class="en">Cash in vs out</span></h2><div class="chart" role="img" aria-label="Six month cash in and cash out">'+
+    data.map(function(x){return '<div class="col"><div class="pair"><div class="b in" style="height:'+(x.i/mx*100)+'%"></div><div class="b out" style="height:'+(x.o/mx*100)+'%"></div></div><div class="m">'+MONS[+x.m.slice(5)-1]+'</div><div class="f"><span class="a">'+inrS(x.i)+'</span><span class="o">'+inrS(x.o)+'</span></div></div>'}).join('')+
+    '</div><div class="legend"><span><i style="background:var(--in)"></i>आले · In</span><span><i style="background:var(--out)"></i>गेले · Out</span></div></section>';
+  var act=L('sites').filter(function(s){return s.status==='Active'});
+  h+='<section class="panel"><h2>सुरू असलेल्या साइट <span class="en">Active sites</span></h2>'+(act.length?table([
+    {h:'साइट|Site',v:function(s){return '<b>'+esc(s.name)+'</b><br><span class="sub">'+esc(s.client||'')+'</span>'}},
+    {h:'करार|Contract',c:'n',v:function(s){return inrS(s.value)}},
+    {h:'बिल केले|Billed',c:'n',v:function(s){return inrS(siteStats(s.id).billed)}},
+    {h:'प्रगती|Progress',v:function(s){var p=num(s.value)?Math.min(100,siteStats(s.id).billed/num(s.value)*100):0;return '<div class="bar" title="'+p.toFixed(0)+'%"><i style="width:'+p+'%"></i></div><span class="sub">'+p.toFixed(0)+'%</span>'}},
+    {h:'येणे|Due',c:'n',v:function(s){return inrS(siteStats(s.id).due)}}
+  ],act,{row:function(s){return 'data-open="site:'+s.id+'"'}}):'<p class="note">सुरू असलेली साइट नाही.</p>')+'</section></div>';
+  return h;
+}
+function welcome(){return '<div class="empty" style="margin-bottom:14px"><b>सुरुवात करा · Get started</b><span>प्रथम साइट, कर्मचारी आणि वाहने जोडा. किंवा नमुना माहिती भरून सर्व विभाग पाहा (नंतर एका क्लिकने काढता येते).</span><div class="row" style="justify-content:center">'+addBtn('sites','साइट जोडा')+'<button class="btn" data-act="sample">नमुना माहिती भरा · Load sample data</button></div></div>'}
+
+function vSites(){
+  var rows=L('sites').sort(function(a,b){return (a.status==='Active'?0:1)-(b.status==='Active'?0:1)||String(a.name).localeCompare(b.name)});
+  var h=head('साइट','Sites',exportBtn('sites','sites',[['Site','name'],['Client','client'],['Work order','wo'],['Contract value','value'],['Status','status'],['Start','start'],['Due','end']].map(function(c){return {h:c[0],x:function(r){return r[c[1]]}}}),rows)+addBtn('sites','नवीन साइट'));
+  if(!rows.length)return h+empty(['अजून साइट नाही','प्रत्येक रस्ता / काम एक साइट म्हणून जोडा.'],addBtn('sites','पहिली साइट जोडा'));
+  h+='<div class="cards">'+rows.map(function(s){var x=siteStats(s.id);var cls=s.status==='Active'?'ok':s.status==='Completed'?'mute':'warn';
+    return '<article class="card" data-open="site:'+s.id+'"><div class="row" style="justify-content:space-between"><h3>'+esc(s.name)+'</h3>'+pill(cls,optLabel(OPT.siteStatus,s.status))+'</div>'+
+    '<div class="sub">'+esc(s.client||'')+(s.wo?' · WO '+esc(s.wo):'')+'</div>'+
+    '<dl class="kv"><dt>कराराची रक्कम</dt><dd>'+inrS(s.value)+'</dd><dt>बिल केले (GST शिवाय)</dt><dd>'+inrS(x.billed)+'</dd><dt>मिळाले</dt><dd>'+inrS(x.rec)+'</dd><dt>येणे बाकी</dt><dd>'+inrS(x.due)+'</dd><dt>प्रत्यक्ष खर्च</dt><dd>'+inrS(x.cost)+'</dd><dt class="sum">नफा / तोटा (ओव्हरहेड आधी)</dt><dd class="sum'+(x.profit<0?' neg':'')+'">'+inrS(x.profit)+'</dd></dl></article>'}).join('')+'</div>';
+  return h;
+}
+function openSite(id){
+  var s=DB.sites[id];if(!s)return;var x=siteStats(id);
+  var bills=L('bills').filter(function(b){return b.siteId===id}).sort(desc('date'));
+  var mat={};L('crusherSales').filter(function(r){return r.siteId===id&&r.kind==='Own'}).forEach(function(r){mat[r.product]=(mat[r.product]||0)+num(r.qty)});
+  var p=num(s.value)?Math.min(100,x.billed/num(s.value)*100):0;
+  var h='<h2>'+esc(s.name)+'</h2><div class="sub" style="margin:-6px 0 12px">'+esc(s.client||'')+(s.wo?' · WO '+esc(s.wo):'')+(s.loc?' · '+esc(s.loc):'')+' · '+fd(s.start)+' → '+fd(s.end)+'</div>';
+  if(num(s.value))h+='<div class="row" style="margin-bottom:12px"><div class="bar" style="flex:1"><i style="width:'+p+'%"></i></div><span class="sub">कराराच्या '+p.toFixed(0)+'% बिल झाले</span></div>';
+  h+='<div class="grid g2"><div><h2 style="font-size:17px;margin-bottom:6px">बिलिंग <span class="en">Billing</span></h2><dl class="kv"><dt>कराराची रक्कम</dt><dd>'+inr(s.value)+'</dd><dt>बिल केले (GST शिवाय)</dt><dd>'+inr(x.billed)+'</dd><dt>मिळाले</dt><dd>'+inr(x.rec)+'</dd><dt class="sum">येणे बाकी</dt><dd class="sum">'+inr(x.due)+'</dd></dl></div>'+
+   '<div><h2 style="font-size:17px;margin-bottom:6px">खर्च <span class="en">Direct cost</span></h2><dl class="kv"><dt>खर्च नोंदी</dt><dd>'+inr(x.exp)+'</dd><dt>वाहन (डिझेल / दुरुस्ती)</dt><dd>'+inr(x.veh)+'</dd><dt>मजुरी</dt><dd>'+inr(x.lab)+'</dd><dt class="sum">एकूण खर्च</dt><dd class="sum">'+inr(x.cost)+'</dd><dt class="sum">नफा / तोटा</dt><dd class="sum'+(x.profit<0?' neg':'')+'">'+inr(x.profit)+'</dd></dl></div></div>';
+  if(Object.keys(mat).length)h+='<p class="note sec">स्वतःच्या क्रशरचा माल या साइटला: '+Object.keys(mat).map(function(k){var pr=PROD.filter(function(q){return q[0]===k})[0];return (pr?pr[1]:k)+' '+qty(mat[k])+' '+esc(cfg().unit)}).join(', ')+'</p>';
+  h+='<h2 class="sec" style="font-size:17px;margin-bottom:6px">बिले <span class="en">Bills</span></h2>'+(bills.length?table([{h:'बिल|Bill',v:function(b){return '<b>'+esc(b.billNo)+'</b>'}},{h:'तारीख|Date',v:function(b){return fd(b.date)}},{h:'मिळणार|Net',c:'n',v:function(b){return inr(billCalc(b).net)}},{h:'बाकी|Due',c:'n',v:function(b){return inr(billCalc(b).due)}}],bills,{row:function(b){return 'data-open="bill:'+b.id+'"'}}):'<p class="note">या साइटचे बिल नाही.</p>');
+  h+='<div class="acts"><button class="btn" data-act="add" data-ent="bills" data-preset=\''+esc(JSON.stringify({siteId:id}))+'\'>+ बिल</button><button class="btn" data-act="add" data-ent="expenses" data-preset=\''+esc(JSON.stringify({siteId:id}))+'\'>+ खर्च</button><span class="sp"></span><button class="btn" data-edit="sites:'+id+'">बदला · Edit</button><button class="btn pri" data-act="close">बंद</button></div>';
+  showModal(h,{t:'site',id:id},true);
+}
+
+function vStaff(){
+  var tab=tabOf('staff','dir');
+  var h=head('कर्मचारी व पगार','Staff & salary','')+tabs('staff',[['dir','कर्मचारी','Directory'],['att','हजेरी','Attendance'],['pay','पगार','Salary']],'dir');
+  if(tab==='att')return h+vAtt();if(tab==='pay')return h+vSalary();
+  var rows=L('staff').sort(function(a,b){return (a.status==='Left'?1:0)-(b.status==='Left'?1:0)||String(a.name).localeCompare(b.name)});
+  var cols=[{h:'नाव|Name',v:function(r){return '<b>'+esc(r.name)+'</b>'}},{h:'पद|Role',v:function(r){return esc(optLabel(OPT.role,r.role))}},{h:'फोन|Phone',v:function(r){return esc(r.phone||'–')}},{h:'मासिक पगार|Salary',c:'n',v:function(r){return inr(r.salary)}},{h:'स्थिती|Status',v:function(r){return pill(r.status==='Left'?'mute':'ok',optLabel(OPT.active,r.status||'Active'))}}];
+  return h+'<div class="row" style="justify-content:flex-end;margin-bottom:10px">'+exportBtn('staff','staff',cols.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),rows)+addBtn('staff','कर्मचारी जोडा')+'</div>'+
+    table(cols,rows,{row:function(r){return 'data-edit="staff:'+r.id+'"'},empty:['कर्मचारी नाहीत','मॅनेजर, सुपरवायझर, ऑपरेटर, ड्रायव्हर जोडा.'],emptyBtn:addBtn('staff','कर्मचारी जोडा')});
+}
+function vAtt(){
+  var m=curM(),n=daysIn(m),t=todayS(),isCur=t.indexOf(m)===0;
+  var staff=L('staff').filter(function(s){return s.status!=='Left'}).sort(function(a,b){return String(a.name).localeCompare(b.name)});
+  var h='<div class="filters"><label>महिना · Month<input type="month" data-f="month" value="'+esc(m)+'" style="width:auto"></label>'+(isCur?'<button class="btn" data-act="allpresent">आज सर्वांना हजर · Mark all present today</button>':'')+'</div>';
+  if(!staff.length)return h+empty(['कर्मचारी नाहीत','आधी कर्मचारी यादीत जोडा.']);
+  h+='<p class="note" style="margin-bottom:8px">घरावर दाबा: रिकामे → <b>P</b> हजर → <b>H</b> अर्धा दिवस → <b>A</b> गैरहजर → रिकामे</p>';
+  var head1='<th class="nm">नाव</th>';
+  for(var d=1;d<=n;d++){var ds=m+'-'+pad(d),dow=new Date(ds+'T00:00:00').getDay();head1+='<th class="c'+(dow===0?' sun':'')+(ds===t?' today':'')+'">'+d+'</th>'}
+  head1+='<th class="n">दिवस</th>';
+  var body=staff.map(function(s){var a=(DB.att[s.id+'_'+m]||{}).days||{};var r='<td class="nm"><b>'+esc(s.name)+'</b></td>';
+    for(var d=1;d<=n;d++){var ds=m+'-'+pad(d),dow=new Date(ds+'T00:00:00').getDay(),v=a[d]||'';r+='<td class="c '+v+(dow===0?' sun':'')+'" data-act="att" data-s="'+s.id+'" data-d="'+d+'">'+v+'</td>'}
+    return '<tr>'+r+'<td class="n"><b>'+present(s.id,m)+'</b></td></tr>'}).join('');
+  return h+'<div class="tw att" id="grid"><table><thead><tr>'+head1+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+function vSalary(){
+  var m=curM(),b=num(cfg().basis)||30;
+  var staff=L('staff').filter(function(s){return s.status!=='Left'||earnedStaff(s,m)>0}).sort(function(a,b2){return String(a.name).localeCompare(b2.name)});
+  var h='<div class="filters"><label>महिना · Month<input type="month" data-f="month" value="'+esc(m)+'" style="width:auto"></label></div>';
+  var rows=staff.map(function(s){var e=earnedStaff(s,m),adv=paidIn('staff',s.id,m,'Advance'),sal=paidIn('staff',s.id,m,'Salary');return {s:s,days:present(s.id,m),e:e,adv:adv,sal:sal,due:e-adv-sal}});
+  var cols=[{h:'नाव|Name',v:function(r){return '<b>'+esc(r.s.name)+'</b><br><span class="sub">'+esc(optLabel(OPT.role,r.s.role))+'</span>'}},{h:'पगार|Monthly',c:'n',v:function(r){return inr(r.s.salary)}},{h:'हजर दिवस|Days',c:'n',v:function(r){return r.days}},{h:'कमावलेले|Earned',c:'n',v:function(r){return inr(r.e)}},{h:'उचल|Advance',c:'n',v:function(r){return inr(r.adv)}},{h:'दिलेला पगार|Paid',c:'n',v:function(r){return inr(r.sal)}},{h:'बाकी|Due',c:'n',v:function(r){return '<b class="'+(r.due<0?'neg':'')+'">'+inr(r.due)+'</b>'}},
+   {h:'',v:function(r){return '<span class="row" style="flex-wrap:nowrap"><button class="btn sm pri" data-act="pay" data-who="staff" data-id="'+r.s.id+'" data-kind="Salary" data-amt="'+Math.max(0,r.due)+'">पगार द्या</button><button class="btn sm" data-act="pay" data-who="staff" data-id="'+r.s.id+'" data-kind="Advance" data-amt="">उचल</button></span>'}}];
+  h+=table(cols,rows,{empty:['कर्मचारी नाहीत',''],foot:[['एकूण'],[''],[''],[inr(rows.reduce(function(s,r){return s+r.e},0)),'n'],[inr(rows.reduce(function(s,r){return s+r.adv},0)),'n'],[inr(rows.reduce(function(s,r){return s+r.sal},0)),'n'],[inr(rows.reduce(function(s,r){return s+r.due},0)),'n'],['']]});
+  h+='<p class="note" style="margin-top:8px">कमावलेले = मासिक पगार ÷ '+b+' × हजर दिवस (अर्धा दिवस = ०.५). बाकी = कमावलेले − उचल − दिलेला पगार. दिवसांचा आधार सेटिंगमध्ये बदलता येतो.</p>';
+  var pays=L('payouts').filter(function(p){return p.who==='staff'&&String(p.date).indexOf(m)===0}).sort(desc('date'));
+  h+='<h2 class="sec" style="margin-bottom:8px">या महिन्याचे पेमेंट <span class="en">Payments</span></h2>'+table([{h:'तारीख|Date',v:function(p){return fd(p.date)}},{h:'कर्मचारी|Staff',v:function(p){return esc(nameOf('staff',p.personId))}},{h:'प्रकार|Type',v:function(p){return esc(optLabel(OPT.payKind,p.kind))}},{h:'रक्कम|Amount',c:'n',v:function(p){return inr(p.amount)}},{h:'पद्धत|Mode',v:function(p){return esc(optLabel(OPT.mode,p.mode))}}],pays,{row:function(p){return 'data-edit="payouts:'+p.id+'"'},empty:['या महिन्यात पेमेंट नाही','']});
+  return h;
+}
+
+function vLabour(){
+  var tab=tabOf('labour','days');
+  var h=head('मजूर','Labour','')+tabs('labour',[['days','रोजची नोंद','Daily entries'],['bal','हिशेब','Balances'],['dir','मजूर यादी','Workers']],'days');
+  if(tab==='dir'){
+    var rows=L('labour').sort(function(a,b){return (a.status==='Left'?1:0)-(b.status==='Left'?1:0)||String(a.name).localeCompare(b.name)});
+    return h+'<div class="row" style="justify-content:flex-end;margin-bottom:10px">'+addBtn('labour','मजूर जोडा')+'</div>'+table([{h:'नाव|Name',v:function(r){return '<b>'+esc(r.name)+'</b>'}},{h:'प्रकार|Type',v:function(r){return esc(optLabel(OPT.ltype,r.ltype))}},{h:'मुकादम / टोळी|Gang',v:function(r){return esc(r.gang||'–')}},{h:'रोजंदारी|Daily wage',c:'n',v:function(r){return inr(r.rate)}},{h:'फोन|Phone',v:function(r){return esc(r.phone||'–')}},{h:'स्थिती|Status',v:function(r){return pill(r.status==='Left'?'mute':'ok',optLabel(OPT.active,r.status||'Active'))}}],rows,{row:function(r){return 'data-edit="labour:'+r.id+'"'},empty:['मजूर नाहीत','मजुरांची नावे आणि रोजंदारी जोडा.'],emptyBtn:addBtn('labour','मजूर जोडा')});
+  }
+  if(tab==='bal'){
+    var m=curM();var rows2=L('labour').filter(function(w){return w.status!=='Left'||labourWage(w.id)-paidIn('labour',w.id)!==0}).sort(function(a,b){return String(a.name).localeCompare(b.name)}).map(function(w){var wage=labourWage(w.id),paid=paidIn('labour',w.id);return {w:w,dm:labourDaysCount(w.id,m),em:labourWage(w.id,m),pm:paidIn('labour',w.id,m),bal:wage-paid}});
+    var cols=[{h:'नाव|Name',v:function(r){return '<b>'+esc(r.w.name)+'</b><br><span class="sub">'+esc(r.w.gang||'')+'</span>'}},{h:'दिवस (महिना)|Days',c:'n',v:function(r){return qty(r.dm)}},{h:'मजुरी (महिना)|Earned',c:'n',v:function(r){return inr(r.em)}},{h:'दिले (महिना)|Paid',c:'n',v:function(r){return inr(r.pm)}},{h:'एकूण बाकी|Balance, all time',c:'n',v:function(r){return '<b class="'+(r.bal<0?'neg':'')+'">'+inr(r.bal)+'</b>'}},{h:'',v:function(r){return '<span class="row" style="flex-wrap:nowrap"><button class="btn sm pri" data-act="pay" data-who="labour" data-id="'+r.w.id+'" data-kind="Payment" data-amt="'+Math.max(0,r.bal)+'">मजुरी द्या</button><button class="btn sm" data-act="pay" data-who="labour" data-id="'+r.w.id+'" data-kind="Advance" data-amt="">उचल</button></span>'}}];
+    return h+'<div class="filters"><label>महिना · Month<input type="month" data-f="month" value="'+esc(m)+'" style="width:auto"></label></div>'+table(cols,rows2,{empty:['मजूर नाहीत',''],foot:[['एकूण'],[''],[inr(rows2.reduce(function(s,r){return s+r.em},0)),'n'],[inr(rows2.reduce(function(s,r){return s+r.pm},0)),'n'],[inr(rows2.reduce(function(s,r){return s+r.bal},0)),'n'],['']]})+'<p class="note" style="margin-top:8px">एकूण बाकी = आतापर्यंतची एकूण मजुरी − दिलेली मजुरी − उचल. उणे रक्कम म्हणजे मजुराने जास्त उचल घेतली आहे.</p><h2 class="sec" style="margin-bottom:8px">या महिन्याचे पेमेंट <span class="en">Payments</span></h2>'+table([{h:'तारीख|Date',v:function(p){return fd(p.date)}},{h:'मजूर|Worker',v:function(p){return esc(nameOf('labour',p.personId))}},{h:'प्रकार|Type',v:function(p){return esc(optLabel(OPT.lpayKind,p.kind))}},{h:'रक्कम|Amount',c:'n',v:function(p){return inr(p.amount)}},{h:'पद्धत|Mode',v:function(p){return esc(optLabel(OPT.mode,p.mode))}}],L('payouts').filter(function(p){return p.who==='labour'&&String(p.date).indexOf(m)===0}).sort(desc('date')),{row:function(p){return 'data-edit="payouts:'+p.id+'"'},empty:['या महिन्यात पेमेंट नाही','']});
+  }
+  var ent=L('labourDays').filter(inMonth).filter(function(r){return !S.site||r.siteId===S.site}).sort(desc('date'));
+  var cols2=[{h:'तारीख|Date',c:'nw',v:function(r){return fd(r.date)}},{h:'मजूर|Worker',v:function(r){return '<b>'+esc(nameOf('labour',r.labourId))+'</b>'}},{h:'साइट|Site',v:function(r){return esc(nameOf('sites',r.siteId))}},{h:'दिवस|Days',c:'n',v:function(r){return qty(r.days)}},{h:'दर|Rate',c:'n',v:function(r){return inr(r.rate)}},{h:'मजुरी|Wage',c:'n',v:function(r){return inr(num(r.days)*num(r.rate))}}];
+  return h+filterBar({month:1,site:1})+'<div class="row" style="justify-content:flex-end;margin-bottom:10px">'+exportBtn('labourDays','labour-entries',cols2.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),ent)+'<button class="btn pri" data-act="muster">+ आजची हजेरी · Daily muster</button>'+addBtn('labourDays','एक नोंद','', 'btn')+'</div>'+
+    table(cols2,ent,{row:function(r){return 'data-edit="labourDays:'+r.id+'"'},empty:['या कालावधीत नोंद नाही','"आजची हजेरी" वापरून सर्व मजुरांची एकदम नोंद करा.'],foot:[['एकूण'],[''],[''],[qty(sum(ent,'days')),'n'],[''],[inr(ent.reduce(function(s,r){return s+num(r.days)*num(r.rate)},0)),'n']]});
+}
+function openMuster(){
+  var w=L('labour').filter(function(x){return x.status!=='Left'}).sort(function(a,b){return String(a.name).localeCompare(b.name)});
+  if(!w.length){toast('आधी मजूर जोडा · Add workers first');return}
+  if(!L('sites').length){toast('आधी साइट जोडा · Add a site first');return}
+  var h='<h2>आजची हजेरी <span class="en">Daily muster</span></h2><div class="ff"><label class="fld"><span>'+lab('तारीख|Date')+'</span><input type="date" id="mdate" value="'+todayS()+'"></label><label class="fld"><span>'+lab('साइट|Site')+'</span>'+selectHTML('msite',siteOpts(false),S.site||'')+'</label></div>'+
+   '<div class="row" style="margin:12px 0 4px"><span class="note" style="flex:1">ज्यांनी काम केले त्यांच्यासमोर दिवस लिहा (१, ०.५, १.५…)</span><button class="btn sm" data-act="musterall">सर्वांना १</button></div><div class="tw"><table><tbody>'+
+   w.map(function(x){return '<tr><td><b>'+esc(x.name)+'</b><br><span class="sub">'+inr(x.rate)+'/दिवस'+(x.gang?' · '+esc(x.gang):'')+'</span></td><td style="width:100px"><input type="number" step="0.5" min="0" inputmode="decimal" class="mday" data-w="'+x.id+'" aria-label="'+esc(x.name)+'"></td></tr>'}).join('')+'</tbody></table></div>'+
+   '<div class="acts"><span class="sp"></span><button class="btn" data-act="close">रद्द</button><button class="btn pri" data-act="musterSave">जतन करा</button></div>';
+  showModal(h,null);
+}
+
+function vBills(){
+  var bills=L('bills').filter(function(b){return !S.site||b.siteId===S.site}).sort(desc('date'));
+  var T={net:0,rec:0,due:0,sd:0};bills.forEach(function(b){var c=billCalc(b);T.net+=c.net;T.rec+=c.rec;T.due+=Math.max(0,c.due);T.sd+=c.sd});
+  var cols=[{h:'बिल|Bill',v:function(b){return '<b>'+esc(b.billNo)+'</b><br><span class="sub">'+esc(optLabel(OPT.billKind,b.kind))+'</span>'}},{h:'साइट|Site',v:function(b){return esc(nameOf('sites',b.siteId))}},{h:'तारीख|Date',c:'nw',v:function(b){return fd(b.date)}},{h:'बिल रक्कम|Bill total',c:'n',v:function(b){return inr(billCalc(b).total)}},{h:'वजावट|Deductions',c:'n',v:function(b){return inr(billCalc(b).ded)}},{h:'मिळणार|Net',c:'n',v:function(b){return inr(billCalc(b).net)}},{h:'मिळाले|Received',c:'n',v:function(b){return inr(billCalc(b).rec)}},{h:'बाकी|Due',c:'n',v:function(b){return '<b>'+inr(Math.max(0,billCalc(b).due))+'</b>'}},{h:'स्थिती|Status',v:function(b){var s=billStatus(billCalc(b));return pill(s[0],s[1])}}];
+  var h=head('क्लायंट बिल','Client bills',exportBtn('bills','bills',cols.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),bills)+addBtn('bills','नवीन बिल'));
+  h+='<div class="grid g4" style="margin-bottom:14px"><div class="tile"><div class="l">मिळणार एकूण · Net receivable</div><div class="v">'+inrS(T.net)+'</div></div><div class="tile"><div class="l">मिळाले · Received</div><div class="v in">'+inrS(T.rec)+'</div></div><div class="tile"><div class="l">येणे बाकी · Due</div><div class="v'+(T.due>0?' bad':'')+'">'+inrS(T.due)+'</div></div><div class="tile"><div class="l">सुरक्षा ठेव · Security deposit</div><div class="v">'+inrS(T.sd)+'</div><div class="d">काम पूर्ण झाल्यावर परत मिळते</div></div></div>';
+  h+=filterBar({site:1})+table(cols,bills,{row:function(b){return 'data-open="bill:'+b.id+'"'},empty:['अजून बिल नाही','रनिंग (RA) बिल जोडा. GST व वजावट आपोआप मोजली जाईल.'],emptyBtn:addBtn('bills','पहिले बिल जोडा')});
+  return h;
+}
+function openBill(id){
+  var b=DB.bills[id];if(!b)return;var c=billCalc(b),rc=receiptsOf(id).sort(desc('date')),s=billStatus(c);
+  var h='<div class="row" style="justify-content:space-between"><h2 style="margin:0">बिल '+esc(b.billNo)+'</h2>'+pill(s[0],s[1])+'</div><div class="sub" style="margin:2px 0 12px">'+esc(nameOf('sites',b.siteId))+' · '+fd(b.date)+' · '+esc(optLabel(OPT.billKind,b.kind))+(b.note?' · '+esc(b.note):'')+'</div>';
+  h+='<dl class="kv"><dt>कामाची रक्कम</dt><dd>'+inr(c.base,2)+'</dd><dt>+ GST ('+num(b.gstPct)+'%)</dt><dd>'+inr(c.gst,2)+'</dd><dt class="sum">बिलाची एकूण रक्कम</dt><dd class="sum">'+inr(c.total,2)+'</dd><dt>− सुरक्षा ठेव ('+num(b.sdPct)+'%)</dt><dd>'+inr(c.sd,2)+'</dd><dt>− आयकर TDS ('+num(b.itPct)+'%)</dt><dd>'+inr(c.it,2)+'</dd><dt>− GST TDS ('+num(b.gstTdsPct)+'%)</dt><dd>'+inr(c.gt,2)+'</dd><dt>− कामगार उपकर ('+num(b.cessPct)+'%)</dt><dd>'+inr(c.cess,2)+'</dd><dt>− इतर'+(b.otherNote?' ('+esc(b.otherNote)+')':'')+'</dt><dd>'+inr(c.oth,2)+'</dd><dt class="sum">प्रत्यक्ष मिळणारी रक्कम</dt><dd class="sum">'+inr(c.net,2)+'</dd><dt>मिळाले</dt><dd>'+inr(c.rec,2)+'</dd><dt class="sum">येणे बाकी</dt><dd class="sum'+(c.due>0.5?' neg':'')+'">'+inr(c.due,2)+'</dd></dl>';
+  h+='<h2 class="sec" style="font-size:17px;margin-bottom:6px">मिळालेले पेमेंट <span class="en">Receipts</span></h2>'+(rc.length?table([{h:'तारीख|Date',v:function(r){return fd(r.date)}},{h:'रक्कम|Amount',c:'n',v:function(r){return inr(r.amount,2)}},{h:'UTR / चेक|Ref',v:function(r){return esc(r.ref||'–')}}],rc,{row:function(r){return 'data-edit="receipts:'+r.id+'"'}}):'<p class="note">अजून पेमेंट मिळालेले नाही.</p>');
+  h+='<div class="acts"><button class="btn pri" data-act="add" data-ent="receipts" data-preset=\''+esc(JSON.stringify({billId:id,amount:Math.max(0,Math.round(c.due*100)/100)}))+'\'>+ पेमेंट मिळाले</button><span class="sp"></span><button class="btn" data-edit="bills:'+id+'">बदला · Edit</button><button class="btn" data-act="close">बंद</button></div>';
+  showModal(h,{t:'bill',id:id},true);
+}
+
+function vCrusher(){
+  var tab=tabOf('crusher','stock'),u=cfg().unit;
+  var h=head('स्टोन क्रशर','Stone crusher','')+tabs('crusher',[['stock','साठा','Stock'],['prod','उत्पादन','Production'],['sale','विक्री / रवानगी','Dispatch']],'stock');
+  if(tab==='prod'){
+    var rows=L('crusherProd').filter(inMonth).sort(desc('date'));
+    var cols=[{h:'तारीख|Date',c:'nw',v:function(r){return fd(r.date)}},{h:'कच्चा दगड|Input',c:'n',v:function(r){return qty(r.input)}}].concat(PROD.map(function(p){return {h:p[1],c:'n',v:function(r){return num(r[p[0]])?qty(r[p[0]]):'–'}}})).concat([{h:'तास|Hours',c:'n',v:function(r){return r.hours?qty(r.hours):'–'}},{h:'उत्पादन %|Yield',c:'n',v:function(r){var o=PROD.reduce(function(s,p){return s+num(r[p[0]])},0);return num(r.input)?(o/num(r.input)*100).toFixed(0)+'%':'–'}}]);
+    var tin=sum(rows,'input'),tout=rows.reduce(function(s,r){return s+PROD.reduce(function(s2,p){return s2+num(r[p[0]])},0)},0);
+    return h+filterBar({month:1})+'<div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="note">एकक: '+esc(u)+(tin?' · एकूण उत्पादन '+qty(tout)+' / कच्चा दगड '+qty(tin)+' ('+(tout/tin*100).toFixed(0)+'%)':'')+'</span><span class="row">'+exportBtn('prod','crusher-production',cols.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),rows)+addBtn('crusherProd','उत्पादन नोंद')+'</span></div>'+table(cols,rows,{row:function(r){return 'data-edit="crusherProd:'+r.id+'"'},empty:['या कालावधीत उत्पादन नोंद नाही','रोजचे उत्पादन नोंदवा.'],emptyBtn:addBtn('crusherProd','उत्पादन नोंद')});
+  }
+  if(tab==='sale'){
+    var rs=L('crusherSales').filter(inMonth).sort(desc('date'));
+    var cols2=[{h:'तारीख|Date',c:'nw',v:function(r){return fd(r.date)}},{h:'माल|Product',v:function(r){return esc(prodName(r.product))}},{h:'प्रमाण|Qty',c:'n',v:function(r){return qty(r.qty)}},{h:'कोणाला|To',v:function(r){return r.kind==='Own'?pill('mute','स्वतःची साइट')+' '+esc(nameOf('sites',r.siteId)):esc(r.party||'–')}},{h:'गाडी|Vehicle',v:function(r){return esc(r.vehicle||'–')}},{h:'दर|Rate',c:'n',v:function(r){return r.rate?inr(r.rate):'–'}},{h:'रक्कम|Amount',c:'n',v:function(r){return inr(num(r.qty)*num(r.rate))}},{h:'मिळाले|Paid',c:'n',v:function(r){return r.kind==='Own'?'–':inr(r.paid)}},{h:'बाकी|Due',c:'n',v:function(r){return r.kind==='Own'?'–':'<b>'+inr(Math.max(0,num(r.qty)*num(r.rate)-num(r.paid)))+'</b>'}}];
+    var sold=rs.filter(function(r){return r.kind==='Sale'});
+    return h+filterBar({month:1})+'<div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="note">विक्री '+inr(sold.reduce(function(s,r){return s+num(r.qty)*num(r.rate)},0))+' · मिळाले '+inr(sum(sold,'paid'))+'</span><span class="row">'+exportBtn('sale','crusher-dispatch',cols2.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),rs)+addBtn('crusherSales','नवीन रवानगी')+'</span></div>'+table(cols2,rs,{row:function(r){return 'data-edit="crusherSales:'+r.id+'"'},empty:['या कालावधीत रवानगी नाही','विक्री किंवा स्वतःच्या साइटला पाठवलेला माल नोंदवा.'],emptyBtn:addBtn('crusherSales','नवीन रवानगी')});
+  }
+  var st=stock(),mm=curM();
+  var party={};L('crusherSales').filter(function(r){return r.kind==='Sale'}).forEach(function(r){var d=num(r.qty)*num(r.rate)-num(r.paid);var k=r.party||'(नाव नाही)';party[k]=(party[k]||0)+d});
+  var plist=Object.keys(party).filter(function(k){return party[k]>0.5}).sort(function(a,b){return party[b]-party[a]});
+  h+='<div class="grid g3">'+st.map(function(s){var mp=L('crusherProd').filter(function(r){return String(r.date).indexOf(mm)===0}).reduce(function(a,r){return a+num(r[s.key])},0);var mo=L('crusherSales').filter(function(r){return r.product===s.key&&String(r.date).indexOf(mm)===0}).reduce(function(a,r){return a+num(r.qty)},0);
+    return '<div class="tile"><div class="l">'+esc(s.name)+' · साठा ('+esc(u)+')</div><div class="v'+(s.left<0?' bad':'')+'">'+qty(s.left)+'</div><div class="d">आतापर्यंत बनले '+qty(s.made)+' · गेले '+qty(s.out)+'<br>'+ml(mm)+': बनले '+qty(mp)+' · गेले '+qty(mo)+'</div></div>'}).join('')+'</div>';
+  h+='<section class="panel sec"><h2>पार्टीकडून येणे <span class="en">Buyers owing</span></h2>'+(plist.length?'<dl class="kv">'+plist.map(function(k){return '<dt>'+esc(k)+'</dt><dd><b>'+inr(party[k])+'</b></dd>'}).join('')+'</dl>':'<p class="note">कोणाकडून येणे बाकी नाही.</p>')+'</section>';
+  return h;
+}
+function prodName(k){var p=PROD.filter(function(x){return x[0]===k})[0];return p?p[1]:(k||'–')}
+
+function vVehicles(){
+  var tab=tabOf('vehicles','fleet');
+  var h=head('वाहने','Vehicles','')+tabs('vehicles',[['fleet','वाहन यादी','Fleet'],['logs','नोंदी','Logs']],'fleet');
+  var t=todayS();
+  if(tab==='logs'){
+    var rows=L('vehicleLogs').filter(inMonth).filter(function(r){return (!S.site||r.siteId===S.site)&&(!S.veh||r.vehicleId===S.veh)}).sort(desc('date'));
+    var cols=[{h:'तारीख|Date',c:'nw',v:function(r){return fd(r.date)}},{h:'वाहन|Vehicle',v:function(r){var v=DB.vehicles[r.vehicleId];return '<span class="plate">'+esc(v?v.reg:'?')+'</span>'}},{h:'प्रकार|Type',v:function(r){return esc(optLabel(OPT.logKind,r.kind))}},{h:'साइट|Site',v:function(r){return esc(r.siteId?nameOf('sites',r.siteId):'–')}},{h:'लिटर|Litres',c:'n',v:function(r){return r.litres?qty(r.litres):'–'}},{h:'रक्कम|Cost',c:'n',v:function(r){return r.amount?inr(r.amount):'–'}},{h:'मीटर|Meter',c:'n',v:function(r){return r.meter?qty(r.meter):'–'}},{h:'तास/फेऱ्या|Hrs/trips',c:'n',v:function(r){return r.hours?qty(r.hours):'–'}},{h:'नोंद|Note',v:function(r){return esc(r.note||'')}}];
+    return h+filterBar({month:1,veh:1,site:1})+'<div class="row" style="justify-content:flex-end;margin-bottom:10px">'+exportBtn('vlogs','vehicle-logs',cols.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),rows)+addBtn('vehicleLogs','नवीन नोंद')+'</div>'+table(cols,rows,{row:function(r){return 'data-edit="vehicleLogs:'+r.id+'"'},empty:['या कालावधीत नोंद नाही','डिझेल, कामाचे तास आणि दुरुस्ती नोंदवा.'],foot:[['एकूण'],[''],[''],[''],[qty(sum(rows,'litres')),'n'],[inr(sum(rows,'amount')),'n'],[''],[qty(sum(rows,'hours')),'n'],['']]})+'<p class="note" style="margin-top:8px">येथील डिझेल व दुरुस्तीचा खर्च साइटच्या खर्चात आपोआप धरला जातो — "खर्च" विभागात पुन्हा नोंदवू नका.</p>';
+  }
+  var vs=L('vehicles').sort(function(a,b){return (a.status==='Sold'?1:0)-(b.status==='Sold'?1:0)||String(a.reg).localeCompare(b.reg)});
+  h+='<div class="row" style="justify-content:flex-end;margin-bottom:10px">'+addBtn('vehicles','वाहन जोडा')+'</div>';
+  if(!vs.length)return h+empty(['अजून वाहन नाही','टिप्पर, जेसीबी, रोलर, पेव्हर आदी वाहने जोडा.'],addBtn('vehicles','पहिले वाहन जोडा'));
+  return h+'<div class="cards">'+vs.map(function(v){var s=vStats(v);
+    var docs=VDOCS.map(function(d){var x=v[d[0]];if(!x)return '';var n=diffDays(x,t);return pill(n<0?'bad':n<=30?'warn':'ok',d[1]+' '+fd(x))}).join(' ');
+    return '<article class="card" data-edit="vehicles:'+v.id+'"><div class="row" style="justify-content:space-between"><span class="plate">'+esc(v.reg)+'</span>'+pill(v.status==='Active'?'ok':v.status==='Sold'?'mute':'warn',optLabel(OPT.vstatus,v.status||'Active'))+'</div>'+
+     '<div><b>'+esc(optLabel(OPT.vtype,v.vtype))+'</b> <span class="sub">'+esc(v.make||'')+' · '+esc(optLabel(OPT.vown,v.own))+'</span></div>'+(docs?'<div class="chips">'+docs+'</div>':'')+
+     '<dl class="kv"><dt>डिझेल (एकूण)</dt><dd>'+qty(s.litres)+' L · '+inr(s.fuelCost)+'</dd><dt>दुरुस्ती खर्च</dt><dd>'+inr(s.rep)+'</dd>'+(s.eff?'<dt>सरासरी (अंदाजे)</dt><dd>'+(v.meterUnit==='km'?s.eff.toFixed(1)+' किमी/L':s.eff.toFixed(1)+' L/तास')+'</dd>':'')+(s.nextDue?'<dt>पुढील सर्व्हिस</dt><dd>'+fd(s.nextDue)+'</dd>':'')+'</dl>'+
+     '<div class="row"><button class="btn sm" data-act="add" data-ent="vehicleLogs" data-preset=\''+esc(JSON.stringify({vehicleId:v.id,kind:'Fuel'}))+'\'>+ डिझेल</button><button class="btn sm" data-act="add" data-ent="vehicleLogs" data-preset=\''+esc(JSON.stringify({vehicleId:v.id,kind:'Work'}))+'\'>+ काम</button><button class="btn sm" data-act="add" data-ent="vehicleLogs" data-preset=\''+esc(JSON.stringify({vehicleId:v.id,kind:'Repair'}))+'\'>+ दुरुस्ती</button></div></article>'}).join('')+'</div>';
+}
+
+function vExpenses(){
+  var rows=L('expenses').filter(inMonth).filter(function(r){return (!S.site||r.siteId===S.site)&&(!S.cat||r.cat===S.cat)}).sort(desc('date'));
+  var cols=[{h:'तारीख|Date',c:'nw',v:function(r){return fd(r.date)}},{h:'प्रकार|Category',v:function(r){return esc(optLabel(OPT.cat,r.cat).split(' (')[0])}},{h:'साइट|Site',v:function(r){return esc(r.siteId?nameOf('sites',r.siteId):'सामायिक')}},{h:'कोणाला|Paid to',v:function(r){return esc(r.paidTo||'–')}},{h:'पद्धत|Mode',v:function(r){return esc(optLabel(OPT.mode,r.mode))}},{h:'रक्कम|Amount',c:'n',v:function(r){return inr(r.amount)}},{h:'नोंद|Note',v:function(r){return esc(r.note||'')}}];
+  var byCat={};rows.forEach(function(r){byCat[r.cat]=(byCat[r.cat]||0)+num(r.amount)});
+  var h=head('खर्च','Expenses',exportBtn('exp','expenses',cols.map(function(c){return {h:c.h.split('|')[1]||c.h,x:function(r){return stripHtml(c.v(r))}}}),rows)+addBtn('expenses','नवीन खर्च'));
+  h+=filterBar({month:1,site:1,cat:1});
+  if(rows.length)h+='<div class="chips" style="margin-bottom:12px">'+Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a]}).map(function(k){return '<span class="chip">'+esc(optLabel(OPT.cat,k).split(' (')[0])+' <b>'+inrS(byCat[k])+'</b></span>'}).join('')+'</div>';
+  return h+table(cols,rows,{row:function(r){return 'data-edit="expenses:'+r.id+'"'},empty:['या कालावधीत खर्च नाही','साहित्य, रॉयल्टी, वीज बिल, वाहतूक आदी खर्च नोंदवा.'],emptyBtn:addBtn('expenses','नवीन खर्च'),foot:[['एकूण'],[''],[''],[''],[''],[inr(sum(rows,'amount')),'n'],['']]})+'<p class="note" style="margin-top:8px">पगार, मजुरी आणि वाहनाचे डिझेल/दुरुस्ती यांची नोंद त्या त्या विभागात होते — येथे पुन्हा नको.</p>';
+}
+
+function vSetup(){
+  var c=cfg();var demo=TABLES.some(function(t){return L(t).some(function(r){return r.demo})});
+  var h=head('सेटिंग','Setup','');
+  h+='<div class="stack"><section class="panel"><h2>फर्म व दर <span class="en">Firm & default rates</span></h2><form id="cform"><div class="ff">'+
+   '<label class="fld full"><span>'+lab('फर्मचे नाव|Firm name')+'</span><input id="c_firm" value="'+esc(c.firm)+'"></label>'+
+   [['gst','GST %|GST on bills'],['sd','सुरक्षा ठेव %|Security deposit'],['it','आयकर TDS %|Income-tax TDS'],['gstTds','GST TDS %|GST TDS'],['cess','कामगार उपकर %|Labour cess'],['basis','पगाराचे दिवस|Salary days per month']].map(function(x){return '<label class="fld"><span>'+lab(x[1])+'</span><input type="number" step="any" id="c_'+x[0]+'" value="'+esc(c[x[0]])+'"></label>'}).join('')+
+   '<label class="fld"><span>'+lab('क्रशर एकक|Crusher unit')+'</span>'+selectHTML('c_unit',[['MT','टन (MT)'],['Brass','ब्रास']],c.unit)+'</label></div><p class="note" style="margin-top:10px">हे दर नवीन बिल भरताना आपोआप येतात; प्रत्येक बिलात बदलता येतात. वजावटीचे दर तुमच्या करारानुसार / CA कडून खात्री करा.</p><div class="acts"><button class="btn pri" type="submit">जतन करा</button></div></form></section>';
+  h+='<section class="panel"><h2>माहितीची साठवण <span class="en">Data</span></h2><p>'+(mode==='cloud'?'ही माहिती क्लाउडमध्ये साठवली जाते आणि हे पान उघडणाऱ्या परवानगी असलेल्या सर्वांना दिसते. मॅनेजरला माहिती भरण्यासाठी शेअर करताना "Contributor" परवानगी द्या.':'ही माहिती फक्त या ब्राउझरमध्ये साठवली आहे. दुसऱ्या फोन/संगणकावर दिसणार नाही.')+'</p><div class="acts">'+(demo?'<button class="btn danger" data-act="nosample">नमुना माहिती काढा · Remove sample data</button>':'<button class="btn" data-act="sample">नमुना माहिती भरा · Load sample data</button>')+'</div></section></div>';
+  return h;
+}
+var V={dash:vDash,sites:vSites,staff:vStaff,labour:vLabour,bills:vBills,crusher:vCrusher,vehicles:vVehicles,expenses:vExpenses,setup:vSetup};
+
+/* ───────── added user sign-in ───────── */
+function showLogin(message){
+  document.body.classList.add('auth-pending');
+  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Road Construction Manager</span></div></div><h1>Sign in</h1><p class="auth-intro">Enter your authorized username and password to continue.</p><form id="login-form" class="auth-form"><label>Username<input name="username" type="text" autocomplete="username" required autofocus></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Sign in</button><p id="login-error" class="auth-error" role="alert">'+(message?esc(message):'')+'</p></form></section>';
+  var first=$('auth-screen').querySelector('input[name="username"]');if(first)first.focus();
+}
+function startApp(){
+  document.body.classList.remove('auth-pending');
+  $('auth-screen').innerHTML='';
+  lsLoad();
+  route();
+  if(booting){
+    window.claude.use('db').then(function(d){
+      if(!d){booting=false;mode='local';render();return}
+      dbh=d;mode='cloud';DB={};TABLES.forEach(function(t){DB[t]={}});subscribeAll();
+      setTimeout(function(){if(booting){booting=false;render()}},6000);
+    }).catch(function(){booting=false;render()});
+  }
+}
+function startAuth(){
+  document.body.classList.add('auth-pending');
+  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Road Construction Manager</span></div></div><div class="auth-loading">Checking sign-in…</div></section>';
+  fetch('/api/auth/session',{method:'GET',credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}})
+    .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d}})})
+    .then(function(result){
+      if(result.ok&&result.data&&result.data.authenticated){authUser=result.data.user||null;startApp()}
+      else showLogin(result.data&&result.data.error?result.data.error:'');
+    })
+    .catch(function(){showLogin('Could not reach the sign-in service. Open the deployed Vercel website and try again.')});
+}
+function submitLogin(form){
+  var button=form.querySelector('button[type="submit"]'),error=$('login-error');
+  if(button){button.disabled=true;button.textContent='Signing in…'}
+  if(error)error.textContent='';
+  fetch('/api/auth/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({username:form.elements.username.value.trim(),password:form.elements.password.value})})
+    .then(function(r){return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,data:d}})})
+    .then(function(result){
+      if(!result.ok){if(error)error.textContent=result.data.error||'Sign-in failed. Check your username and password.';return}
+      authUser=result.data.user||null;startApp();
+    })
+    .catch(function(){if(error)error.textContent='Unable to contact the sign-in service. Please try again.'})
+    .then(function(){if(button&&button.isConnected){button.disabled=false;button.textContent='Sign in'}});
+}
+function logoutUser(){
+  fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',headers:{'Accept':'application/json'}})
+    .catch(function(){})
+    .then(function(){authUser=null;showLogin('You have been signed out.')});
+}
+
+/* ───────── render ───────── */
+function render(){
+  var g=$('grid'),sl=g?g.scrollLeft:0;
+  EXPORTS={};
+  var c=cfg();
+  $('rail').innerHTML='<div class="brand"><div class="tile"><img src="'+LOGO+'" alt="Pazo logo"></div><div class="t"><b>Pazostack</b><small>'+esc(c.firm||'Road construction manager')+'</small></div></div><nav class="nav" aria-label="विभाग">'+
+   NAV.map(function(n){return '<a href="#'+n[0]+'"'+(S.view===n[0]?' aria-current="page"':'')+'>'+n[1]+'<span class="en">'+n[2]+'</span></a>'}).join('')+'</nav><div class="mode '+mode+'">'+(mode==='cloud'?'● क्लाउडवर जतन · Shared':'● फक्त या ब्राउझरमध्ये · This browser only')+'</div><div class="auth-user"><span>Signed in: '+esc(authUser&&authUser.username?authUser.username:'User')+'</span><button class="btn sm" type="button" data-act="logout">Sign out</button></div>';
+  $('main').innerHTML=booting?'<div class="loading">माहिती लोड होत आहे…</div>':V[S.view]();
+  var g2=$('grid');if(g2&&sl)g2.scrollLeft=sl;
+}
+function route(){var h=location.hash.slice(1);S.view=VIEWS.indexOf(h)>=0?h:'dash';render();window.scrollTo(0,0)}
+
+/* ───────── modal & forms ───────── */
+function showModal(html,ctx,keep){
+  S.ctx=ctx||null;
+  $('modal').innerHTML='<div class="ov" id="ov"><div class="sheet'+(keep?'':'')+'" role="dialog" aria-modal="true">'+html+'</div></div>';
+  var f=$('modal').querySelector('input:not([type=hidden]),select');if(f&&!keep)f.focus();
+}
+function closeModal(){$('modal').innerHTML='';S.ctx=null}
+function reopen(ctx){if(!ctx)return;if(ctx.t==='bill')openBill(ctx.id);else if(ctx.t==='site')openSite(ctx.id)}
+function fieldHTML(f,val,d){
+  if(f.t==='hidden')return '<input type="hidden" id="f_'+f.k+'" value="'+esc(val)+'">';
+  var id='f_'+f.k,inp;
+  if(f.t==='select')inp=selectHTML(id,(f.k==='kind'&&d&&d.who==='labour'?OPT.lpayKind:f.opts).map(function(o){var p=parseOpt(o);return [p.v,p.t]}),val);
+  else if(f.t==='site')inp=selectHTML(id,[['','— निवडा —']].concat(siteOpts(false)),val);
+  else if(f.t==='labour')inp=selectHTML(id,[['','— निवडा —']].concat(L('labour').filter(function(w){return w.status!=='Left'||w.id===val}).map(function(w){return [w.id,w.name]})),val);
+  else if(f.t==='vehicle')inp=selectHTML(id,[['','— निवडा —']].concat(L('vehicles').map(function(v){return [v.id,v.reg+' · '+optLabel(OPT.vtype,v.vtype)]})),val);
+  else if(f.t==='prod')inp=selectHTML(id,PROD.map(function(p){return [p[0],p[1]]}),val||'p20');
+  else if(f.t==='textarea')inp='<textarea id="'+id+'">'+esc(val)+'</textarea>';
+  else inp='<input id="'+id+'" type="'+(f.t==='number'?'number':f.t)+'"'+(f.t==='number'?' step="'+(f.step||'any')+'" inputmode="decimal"':'')+(f.ph?' placeholder="'+esc(f.ph)+'"':'')+' value="'+esc(val)+'">';
+  var vis=!f.show||f.show(d);
+  return '<label class="fld'+(f.full?' full':'')+'" data-k="'+f.k+'"'+(vis?'':' hidden')+'><span>'+lab(f.l)+(f.req?' <span class="req" aria-hidden="true">*</span>':'')+'</span>'+inp+'</label>';
+}
+function formVals(e){
+  var v={};e.f.forEach(function(f){var el=$('f_'+f.k);if(!el)return;var x=el.value;if(f.t==='number')x=x===''?'':num(x);v[f.k]=x});return v;
+}
+function openForm(key,id,preset){
+  var e=E[key],back=S.ctx,rec;
+  if(id)rec=DB[key][id];
+  else{rec={};e.f.forEach(function(f){if(f.def!=null)rec[f.k]=typeof f.def==='function'?f.def():f.def});Object.assign(rec,preset||{})}
+  if(!rec)return;
+  var h='<h2>'+(id?'बदला':'नवीन')+': '+esc(e.name.split('|')[0])+'</h2>'+(e.head?e.head(rec):'')+'<form id="frm" data-ent="'+key+'" data-id="'+(id||'')+'"><div class="ff">'+e.f.map(function(f){return fieldHTML(f,rec[f.k],rec)}).join('')+'</div>'+(e.preview?'<div class="prev" id="prev">'+e.preview(rec)+'</div>':'')+
+   '<div class="acts"><button class="btn pri" type="submit">जतन करा</button><button class="btn" type="button" data-act="cancelForm">रद्द</button><span class="sp"></span>'+(id?'<button class="btn danger" type="button" data-act="delete" data-ent="'+key+'" data-id="'+id+'">हटवा</button>':'')+'</div>'+(id&&e.delNote?'<p class="note" style="margin-top:8px">जुन्या नोंदी टिकवण्यासाठी हटवण्याऐवजी स्थिती "सोडले / विकले" करा.</p>':'')+'</form>';
+  showModal(h,null);
+  S.formBack=back;
+}
+function refreshForm(form){
+  var key=form.getAttribute('data-ent'),e=E[key],d=Object.assign({},formVals(e));
+  e.f.forEach(function(f){if(f.show){var w=form.querySelector('[data-k="'+f.k+'"]');if(w)w.hidden=!f.show(d)}});
+  if(e.preview){var p=$('prev');if(p)p.innerHTML=e.preview(d)}
+}
+function submitForm(form){
+  var key=form.getAttribute('data-ent'),id=form.getAttribute('data-id'),e=E[key],v=formVals(e);
+  for(var i=0;i<e.f.length;i++){var f=e.f[i];if(f.req&&(v[f.k]===''||v[f.k]==null)){var el=$('f_'+f.k);if(el){el.setAttribute('aria-invalid','true');el.focus()}toast('भरणे आवश्यक: '+f.l.split('|')[0]);return}}
+  var o=Object.assign({},id?DB[key][id]:{},v);
+  put(key,o);
+  var back=S.formBack;S.formBack=null;closeModal();
+  if(back)reopen(back);
+  toast('जतन झाले ✓');render();
+}
+function doDelete(key,id){
+  if(key==='bills'){receiptsOf(id).forEach(function(r){del('receipts',r.id)})}
+  del(key,id);var back=S.formBack;S.formBack=null;closeModal();
+  if(back&&!(back.id===id))reopen(back);
+  toast('हटवले');render();
+}
+
+/* ───────── toast, export ───────── */
+var tt;function toast(m){var t=$('toast');t.innerHTML='<div class="toast">'+esc(m)+'</div>';clearTimeout(tt);tt=setTimeout(function(){t.innerHTML=''},3200)}
+function exportCSV(k){
+  var x=EXPORTS[k];if(!x)return;
+  var q=function(s){s=s==null?'':String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  var csv='﻿'+x.cols.map(function(c){return q(c.h)}).join(',')+'\n'+x.rows.map(function(r){return x.cols.map(function(c){return q(c.x(r))}).join(',')}).join('\n');
+  /* Claude-hosted downloads when available; otherwise use a normal browser download. */
+  if(window.claude&&window.claude.use){
+    window.claude.use('downloads').then(function(d){
+      if(!d){toast('फाइल डाउनलोड करता आली नाही');return}
+      return d.save({filename:x.name+'-'+todayS()+'.csv',data:csv}).then(function(){toast('फाइल जतन झाली')}).catch(function(e){if(!e||e.code!=='declined')toast('फाइल जतन करता आली नाही')});
+    }).catch(function(){toast('फाइल डाउनलोड करता आली नाही')});
+    return;
+  }
+  try{
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download=x.name+'-'+todayS()+'.csv';a.style.display='none';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    toast('CSV डाउनलोड सुरू झाले ✓');
+  }catch(e){toast('फाइल डाउनलोड करता आली नाही')}
+}
+
+/* ───────── sample data ───────── */
+function makeSample(){
+  var t=new Date(),D=function(n){return iso(new Date(t.getFullYear(),t.getMonth(),t.getDate()+n))},mk=function(tb,o){o.demo=true;return put(tb,o).id};
+  var s1=mk('sites',{name:'राज्य मार्ग 138 रुंदीकरण (कि.मी. 22–31)',client:'सार्वजनिक बांधकाम विभाग (PWD)',wo:'PWD/WO/2026/114',value:48500000,status:'Active',start:D(-150),end:D(120),loc:'तालुका मार्ग'});
+  var s2=mk('sites',{name:'PMGSY ग्रामीण रस्ता पॅकेज MH-14',client:'PMGSY PIU',wo:'PIU/MH14/09',value:21800000,status:'Active',start:D(-90),end:D(25),loc:'डोंगराळ भाग'});
+  var s3=mk('sites',{name:'पूल पोहोच रस्ता व मोऱ्या',client:'जिल्हा परिषद',wo:'ZP/CW/2025/31',value:9600000,status:'Completed',start:D(-300),end:D(-40),loc:'नदीकाठ'});
+  var st=[['सुनील पाटील','Manager',42000],['अमोल जाधव','Engineer',35000],['रमेश कांबळे','Supervisor',24000],['संदीप शिंदे','Operator',22000],['प्रकाश मोरे','Driver',18000],['विजय नाईक','Crusher staff',17000]].map(function(x){return mk('staff',{name:x[0],role:x[1],salary:x[2],phone:'98900'+(10000+Math.floor(Math.random()*89999)),status:'Active',joined:D(-400)})});
+  var m=ym(t),today=t.getDate();
+  st.forEach(function(id,i){var days={};for(var d=1;d<=today;d++){var dow=new Date(t.getFullYear(),t.getMonth(),d).getDay();if(dow!==0)days[d]=((d+i)%11===0?'A':(d+i)%7===3?'H':'P')}put('att',{id:id+'_'+m,staffId:id,month:m,days:days,demo:true})});
+  mk('payouts',{who:'staff',personId:st[2],kind:'Advance',date:D(-3),amount:5000,mode:'Cash',note:''});
+  var lb=[['लक्ष्मण गवळी','Mukadam',800,'गवळी टोळी'],['दत्ता माने','Skilled',700,'गवळी टोळी'],['सविता पवार','Unskilled',500,'गवळी टोळी'],['राजू खान','Unskilled',500,'खान टोळी'],['भीमा जाधव','Unskilled',500,'खान टोळी']].map(function(x){return mk('labour',{name:x[0],ltype:x[1],rate:x[2],gang:x[3],status:'Active'})});
+  var lr=[800,700,500,500,500];
+  for(var k=1;k<=5;k++)lb.forEach(function(id,i){if((k+i)%6!==0)mk('labourDays',{date:D(-k),labourId:id,siteId:(i%2?s2:s1),days:(k+i)%5===0?0.5:1,rate:lr[i]})});
+  mk('payouts',{who:'labour',personId:lb[0],kind:'Payment',date:D(-2),amount:2400,mode:'Cash'});
+  var gp={gstPct:18,sdPct:5,itPct:2,gstTdsPct:2,cessPct:1};
+  var b1=mk('bills',Object.assign({billNo:'RA-1',siteId:s1,date:D(-120),kind:'Running',base:7200000,other:0},gp));
+  var b2=mk('bills',Object.assign({billNo:'RA-2',siteId:s1,date:D(-60),kind:'Running',base:9800000,other:0},gp));
+  var b3=mk('bills',Object.assign({billNo:'RA-1',siteId:s2,date:D(-50),kind:'Running',base:5400000,other:15000,otherNote:'चाचणी शुल्क'},gp));
+  var b4=mk('bills',Object.assign({billNo:'अंतिम',siteId:s3,date:D(-75),kind:'Final',base:3100000,other:0},gp));
+  var net=function(b,base,oth){return Math.round(base*(1+0.18-0.05-0.02-0.02-0.01)-oth)};
+  mk('receipts',{billId:b1,date:D(-95),amount:net(0,7200000,0),ref:'UTR 5201934'});
+  mk('receipts',{billId:b2,date:D(-30),amount:6000000,ref:'चेक 004512'});
+  mk('receipts',{billId:b4,date:D(-40),amount:Math.round(net(0,3100000,0)/2),ref:'UTR 5309921'});
+  var mix={p40:.22,p20:.28,p10:.22,dust:.14,gsb:.0,wmm:.06};
+  for(var j=1;j<=10;j++){var inp=380+((j*37)%90);var o={date:D(-j),input:inp,hours:9,demo:1};PROD.forEach(function(p){o[p[0]]=Math.round(inp*(mix[p[0]]||0))});mk('crusherProd',o)}
+  mk('crusherSales',{date:D(-2),kind:'Sale',product:'p20',qty:120,party:'शिवशक्ती कन्स्ट्रक्शन',vehicle:'MH 09 CD 4410',rate:850,paid:60000});
+  mk('crusherSales',{date:D(-4),kind:'Sale',product:'dust',qty:80,party:'पाटील ब्लॉक्स',vehicle:'MH 09 AB 2231',rate:700,paid:56000});
+  mk('crusherSales',{date:D(-3),kind:'Own',product:'p40',qty:160,siteId:s1,vehicle:'MH 09 EF 1020',rate:800});
+  var vs=[['MH 09 AB 2231','Tipper','Tata Signa 2823','km',D(200),D(70),D(15),D(180)],['MH 09 CD 4410','Tipper','Ashok Leyland 2820','km',D(-12),D(90),D(40),D(300)],['MH 09 EF 1020','JCB','JCB 3DX','hrs',D(150),D(220),D(20),''],['MH 09 GH 7788','Road roller','Sakai SW 502','hrs',D(40),D(200),D(100),''],['MH 09 JK 3355','Paver','Vogele Super 1600','hrs',D(300),D(150),D(260),'']].map(function(x){return mk('vehicles',{reg:x[0],vtype:x[1],make:x[2],meterUnit:x[3],insuranceExp:x[4],fitnessExp:x[5],pucExp:x[6],permitExp:x[7],own:'Own',status:'Active'})});
+  vs.forEach(function(id,i){var u=i<2?'km':'hrs';for(var q=0;q<3;q++)mk('vehicleLogs',{date:D(-18+q*7),vehicleId:id,kind:'Fuel',siteId:i%2?s2:s1,litres:120+i*15,amount:(120+i*15)*91,meter:u==='km'?52000+i*3000+q*900:1800+i*90+q*55});mk('vehicleLogs',{date:D(-9),vehicleId:id,kind:'Work',siteId:s1,hours:8+i,meter:u==='km'?53000+i*3000:1900+i*90})});
+  mk('vehicleLogs',{date:D(-20),vehicleId:vs[2],kind:'Repair',siteId:s1,amount:18500,nextDue:D(5),note:'हायड्रॉलिक सील बदलले'});
+  mk('vehicleLogs',{date:D(-35),vehicleId:vs[0],kind:'Repair',amount:42000,nextDue:D(60),note:'टायर बदलले'});
+  mk('expenses',{date:D(-6),cat:'Material',siteId:s1,amount:865000,paidTo:'बिटुमेन सप्लायर',mode:'Bank',note:'VG-30 बिटुमेन'});
+  mk('expenses',{date:D(-10),cat:'Crusher power',amount:94500,paidTo:'MSEDCL',mode:'UPI',note:''});
+  mk('expenses',{date:D(-14),cat:'Royalty',siteId:s2,amount:38000,paidTo:'तहसील कार्यालय',mode:'Bank'});
+  mk('expenses',{date:D(-4),cat:'Camp & food',siteId:s1,amount:12800,paidTo:'कॅम्प किराणा',mode:'Cash'});
+}
+function clearSample(){TABLES.forEach(function(t){L(t).forEach(function(r){if(r.demo)del(t,r.id)})})}
+
+/* ───────── events ───────── */
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-act],[data-edit],[data-open]');
+  if(!el)return;
+  var a=el.getAttribute('data-act');
+  if(!a){
+    if(ev.target.closest('button,a,input,select')&&!el.matches('button'))return;
+    var ed=el.getAttribute('data-edit');if(ed){var p=ed.split(':');openForm(p[0],p[1]);return}
+    var op=el.getAttribute('data-open');if(op){var q=op.split(':');if(q[0]==='site')openSite(q[1]);else openBill(q[1])}
+    return;
+  }
+  if(a==='logout'){logoutUser()}
+  else if(a==='add'){var pre=el.getAttribute('data-preset');openForm(el.getAttribute('data-ent'),null,pre?JSON.parse(pre):null)}
+  else if(a==='close'){closeModal()}
+  else if(a==='cancelForm'){var b=S.formBack;S.formBack=null;closeModal();if(b)reopen(b)}
+  else if(a==='tab'){S.tab[el.getAttribute('data-v')]=el.getAttribute('data-t');render()}
+  else if(a==='allmonths'){S.month='';render()}
+  else if(a==='att'){
+    var sid=el.getAttribute('data-s'),d=el.getAttribute('data-d'),m=curM(),id=sid+'_'+m,cur=DB.att[id]||{id:id,staffId:sid,month:m,days:{}};
+    var days=Object.assign({},cur.days),v=days[d]||'',nx={'':'P','P':'H','H':'A','A':''}[v];if(nx)days[d]=nx;else delete days[d];
+    put('att',Object.assign({},cur,{days:days}));render();
+  }
+  else if(a==='allpresent'){
+    var m2=curM(),d2=String(new Date().getDate());
+    L('staff').filter(function(s){return s.status!=='Left'}).forEach(function(s){var id=s.id+'_'+m2,cur=DB.att[id]||{id:id,staffId:s.id,month:m2,days:{}};if(!cur.days[d2]){var dd=Object.assign({},cur.days);dd[d2]='P';put('att',Object.assign({},cur,{days:dd}))}});render();toast('आज सर्वांना हजर केले');
+  }
+  else if(a==='pay'){
+    var who=el.getAttribute('data-who'),amt=el.getAttribute('data-amt');
+    openForm('payouts',null,{who:who,personId:el.getAttribute('data-id'),kind:el.getAttribute('data-kind'),amount:amt?+amt:'',date:todayS()});
+  }
+  else if(a==='delete'){
+    if(el.classList.contains('arm')){doDelete(el.getAttribute('data-ent'),el.getAttribute('data-id'))}
+    else{el.classList.add('arm');el.textContent='खात्री? पुन्हा दाबा';setTimeout(function(){if(el.isConnected){el.classList.remove('arm');el.textContent='हटवा'}},4000)}
+  }
+  else if(a==='muster'){openMuster()}
+  else if(a==='musterall'){document.querySelectorAll('.mday').forEach(function(i){i.value=1})}
+  else if(a==='musterSave'){
+    var date=$('mdate').value,site=$('msite').value,n=0;
+    if(!date||!site){toast('तारीख व साइट निवडा');return}
+    document.querySelectorAll('.mday').forEach(function(i){var dv=num(i.value);if(dv>0){var w=DB.labour[i.getAttribute('data-w')];put('labourDays',{date:date,labourId:w.id,siteId:site,days:dv,rate:num(w.rate)});n++}});
+    closeModal();render();toast(n+' मजुरांची नोंद झाली ✓');
+  }
+  else if(a==='export'){exportCSV(el.getAttribute('data-k'))}
+  else if(a==='sample'){toast('नमुना माहिती भरत आहे…');makeSample();render();setTimeout(function(){toast('नमुना माहिती भरली ✓')},600)}
+  else if(a==='nosample'){clearSample();render();toast('नमुना माहिती काढली')}
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target,f=el.getAttribute&&el.getAttribute('data-f');
+  if(f){if(f==='month')S.month=el.value;else S[f]=el.value;render();return}
+  var form=el.closest&&el.closest('#frm');
+  if(form){
+    if(form.getAttribute('data-ent')==='labourDays'&&el.id==='f_labourId'){var w=DB.labour[el.value];if(w)$('f_rate').value=w.rate}
+    refreshForm(form);
+  }
+});
+document.addEventListener('input',function(ev){var form=ev.target.closest&&ev.target.closest('#frm');if(form){if(ev.target.hasAttribute('aria-invalid'))ev.target.removeAttribute('aria-invalid');refreshForm(form)}});
+document.addEventListener('submit',function(ev){
+  ev.preventDefault();var form=ev.target;
+  if(form.id==='login-form')submitLogin(form);
+  else if(form.id==='frm')submitForm(form);
+  else if(form.id==='cform'){
+    var c={id:'main',firm:$('c_firm').value.trim(),unit:$('c_unit').value};['gst','sd','it','gstTds','cess','basis'].forEach(function(k){c[k]=num($('c_'+k).value)});
+    put('config',c);render();toast('जतन झाले ✓');
+  }
+});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&$('modal').firstChild){var b=S.formBack;S.formBack=null;closeModal();if(b)reopen(b)}});
+$('modal').addEventListener('mousedown',function(ev){if(ev.target.id==='ov'){var b=S.formBack;S.formBack=null;closeModal();if(b)reopen(b)}});
+window.addEventListener('hashchange',route);
+
+/* ───────── boot ───────── */
+startAuth();
+})();
+</script>
+
+</body>
+</html>
