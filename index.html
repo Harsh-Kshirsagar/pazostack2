@@ -38,8 +38,8 @@ a{color:inherit}
 .rail{background:var(--road);color:var(--road-ink);border-radius:6px;padding:12px;min-width:0}
 .brand{display:grid;gap:8px;padding:0 0 10px}
 .brand .tile{background:#fff;border-radius:4px;padding:8px;display:grid;place-items:center}
-.brand img{display:block;width:100%;max-width:120px;height:auto}
-@media(max-width:899px){.brand{grid-template-columns:auto 1fr;align-items:center;gap:12px}.brand img{max-width:56px}}
+.brand img{display:block;width:80%;max-width:800px;height:auto}
+@media(max-width:899px){.brand{grid-template-columns:auto 1fr;align-items:center;gap:12px}.brand img{max-width:40px}}
 .brand div.t{padding:0 4px;min-width:0}
 .brand b{display:block;font-family:var(--display);font-size:22px;line-height:1.1;letter-spacing:.01em}
 .brand small{display:block;color:var(--road-mute);font-size:12px;line-height:1.2;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -684,7 +684,7 @@ var V={dash:vDash,sites:vSites,staff:vStaff,labour:vLabour,bills:vBills,crusher:
 /* ───────── added user sign-in ───────── */
 function showLogin(message){
   document.body.classList.add('auth-pending');
-  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Road Construction Manager</span></div></div><h1>Sign in</h1><p class="auth-intro">Enter your authorized username and password to continue.</p><form id="login-form" class="auth-form"><label>Username<input name="username" type="text" autocomplete="username" required autofocus></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Sign in</button><p id="login-error" class="auth-error" role="alert">'+(message?esc(message):'')+'</p></form></section>';
+  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Londhe and Company</span></div></div><h1>Sign in</h1><p class="auth-intro">Enter your authorized username and password to continue.</p><form id="login-form" class="auth-form"><label>Username<input name="username" type="text" autocomplete="username" required autofocus></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Sign in</button><p id="login-error" class="auth-error" role="alert">'+(message?esc(message):'')+'</p></form></section>';
   var first=$('auth-screen').querySelector('input[name="username"]');if(first)first.focus();
 }
 function startApp(){
@@ -702,7 +702,7 @@ function startApp(){
 }
 function startAuth(){
   document.body.classList.add('auth-pending');
-  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Road Construction Manager</span></div></div><div class="auth-loading">Checking sign-in…</div></section>';
+  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Londhe and Company</span></div></div><div class="auth-loading">Checking sign-in…</div></section>';
   fetch('/api/auth/session',{method:'GET',credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}})
     .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d}})})
     .then(function(result){
@@ -735,7 +735,7 @@ function render(){
   var g=$('grid'),sl=g?g.scrollLeft:0;
   EXPORTS={};
   var c=cfg();
-  $('rail').innerHTML='<div class="brand"><div class="tile"><img src="'+LOGO+'" alt="Pazo logo"></div><div class="t"><b>Pazostack</b><small>'+esc(c.firm||'Road construction manager')+'</small></div></div><nav class="nav" aria-label="विभाग">'+
+  $('rail').innerHTML='<div class="brand"><div class="tile"><img src="'+LOGO+'" alt="Pazo logo"></div><div class="t"><b>Pazostack</b><small>'+esc(c.firm||'Londhe and Company')+'</small></div></div><nav class="nav" aria-label="विभाग">'+
    NAV.map(function(n){return '<a href="#'+n[0]+'"'+(S.view===n[0]?' aria-current="page"':'')+'>'+n[1]+'<span class="en">'+n[2]+'</span></a>'}).join('')+'</nav><div class="mode '+mode+'">'+(mode==='cloud'?'● क्लाउडवर जतन · Shared':'● फक्त या ब्राउझरमध्ये · This browser only')+'</div><div class="auth-user"><span>Signed in: '+esc(authUser&&authUser.username?authUser.username:'User')+'</span><button class="btn sm" type="button" data-act="logout">Sign out</button></div>';
   $('main').innerHTML=booting?'<div class="loading">माहिती लोड होत आहे…</div>':V[S.view]();
   var g2=$('grid');if(g2&&sl)g2.scrollLeft=sl;
