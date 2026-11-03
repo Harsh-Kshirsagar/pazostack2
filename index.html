@@ -685,7 +685,7 @@ var V={dash:vDash,sites:vSites,staff:vStaff,labour:vLabour,bills:vBills,crusher:
 /* ───────── added user sign-in ───────── */
 function showLogin(message){
   document.body.classList.add('auth-pending');
-  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>Londhe and Company</span></div></div><h1>Sign in</h1><p class="auth-intro">Enter your authorized username and password to continue.</p><form id="login-form" class="auth-form"><label>Username<input name="username" type="text" autocomplete="username" required autofocus></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Sign in</button><p id="login-error" class="auth-error" role="alert">'+(message?esc(message):'')+'</p></form></section>';
+  $('auth-screen').innerHTML='<section class="auth-card"><div class="auth-brand"><img src="'+LOGO+'" alt="Pazo logo"><div><b>PAZOSTACK</b><span>M/S BABA LONDHE</span></div></div><h1>Sign in</h1><p class="auth-intro">Enter your authorized username and password to continue.</p><form id="login-form" class="auth-form"><label>Username<input name="username" type="text" autocomplete="username" required autofocus></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn pri" type="submit">Sign in</button><p id="login-error" class="auth-error" role="alert">'+(message?esc(message):'')+'</p></form></section>';
   var first=$('auth-screen').querySelector('input[name="username"]');if(first)first.focus();
 }
 function startApp(){
